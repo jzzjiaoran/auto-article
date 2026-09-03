@@ -71,7 +71,14 @@ public class PlatformAccountService {
                 .orElseThrow(() -> new ResourceNotFoundException("平台账号", id));
         account.setName(name);
         if (credentials != null) {
-            account.setCredentials(encryptCredentials(credentials));
+            Map<String, String> existing = decryptCredentials(account.getCredentials());
+            Map<String, String> merged = new java.util.HashMap<>(existing);
+            credentials.forEach((k, v) -> {
+                if (v != null && !v.isBlank()) {
+                    merged.put(k, v);
+                }
+            });
+            account.setCredentials(encryptCredentials(merged));
         }
         if (enabled != null) {
             account.setEnabled(enabled);

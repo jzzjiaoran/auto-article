@@ -1,5 +1,6 @@
 package com.autoarticle.controller;
 
+import com.autoarticle.dto.PlatformAccountDto;
 import com.autoarticle.service.PlatformAccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -31,7 +32,10 @@ public class PlatformAccountController {
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        model.addAttribute("account", platformAccountService.getAccountById(id));
+        PlatformAccountDto account = platformAccountService.getAccountById(id);
+        model.addAttribute("account", account);
+        Map<String, String> credentials = account.getCredentials() == null ? Map.of() : account.getCredentials();
+        model.addAttribute("credentials", credentials);
         return "accounts/form";
     }
 
