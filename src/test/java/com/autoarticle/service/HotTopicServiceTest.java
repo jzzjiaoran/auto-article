@@ -13,16 +13,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -112,7 +115,8 @@ class HotTopicServiceTest {
                 HotTopic.builder().title("话题B").source("weibo").rank(2).build()));
         when(zhihuCrawler.source()).thenReturn("zhihu");
         when(zhihuCrawler.fetch()).thenReturn(List.of());
-        when(hotTopicRepository.existsByTitleIgnoreCase(anyString())).thenReturn(false);
+        when(hotTopicRepository.existsByTitleIgnoreCaseAndCollectedAtGreaterThanEqual(anyString(), any()))
+                .thenReturn(false);
         when(hotTopicRepository.save(any(HotTopic.class))).thenAnswer(inv -> inv.getArgument(0));
 
         int added = hotTopicService.collectHotTopics();
@@ -133,7 +137,8 @@ class HotTopicServiceTest {
         when(zhihuCrawler.source()).thenReturn("zhihu");
         when(zhihuCrawler.fetch()).thenReturn(List.of(
                 HotTopic.builder().title("话题A").source("zhihu").rank(1).build()));
-        when(hotTopicRepository.existsByTitleIgnoreCase("话题A")).thenReturn(true);
+        when(hotTopicRepository.existsByTitleIgnoreCaseAndCollectedAtGreaterThanEqual(eq("话题A"), any()))
+                .thenReturn(true);
 
         int added = hotTopicService.collectHotTopics();
 
@@ -148,7 +153,8 @@ class HotTopicServiceTest {
         when(zhihuCrawler.source()).thenReturn("zhihu");
         when(zhihuCrawler.fetch()).thenReturn(List.of(
                 HotTopic.builder().title("知乎话题").source("zhihu").rank(1).build()));
-        when(hotTopicRepository.existsByTitleIgnoreCase(anyString())).thenReturn(false);
+        when(hotTopicRepository.existsByTitleIgnoreCaseAndCollectedAtGreaterThanEqual(anyString(), any()))
+                .thenReturn(false);
         when(hotTopicRepository.save(any(HotTopic.class))).thenAnswer(inv -> inv.getArgument(0));
 
         int added = hotTopicService.collectHotTopics();
@@ -158,13 +164,39 @@ class HotTopicServiceTest {
     }
 
     @Test
+    void collect_should_count_db_unique_violation_as_skipped() {
+        when(weiboCrawler.source()).thenReturn("weibo");
+        when(weiboCrawler.fetch()).thenReturn(List.of(
+                HotTopic.builder().title("话题A").source("weibo").rank(1).build(),
+                HotTopic.builder().title("话题B").source("weibo").rank(2).build()));
+        when(zhihuCrawler.source()).thenReturn("zhihu");
+        when(zhihuCrawler.fetch()).thenReturn(List.of());
+        when(hotTopicRepository.existsByTitleIgnoreCaseAndCollectedAtGreaterThanEqual(anyString(), any()))
+                .thenReturn(false);
+        when(hotTopicRepository.save(any(HotTopic.class)))
+                .thenAnswer(inv -> {
+                    HotTopic topic = inv.getArgument(0);
+                    if ("话题B".equals(topic.getTitle())) {
+                        throw new DataIntegrityViolationException("duplicate key");
+                    }
+                    return topic;
+                });
+
+        int added = hotTopicService.collectHotTopics();
+
+        assertEquals(1, added);
+        verify(hotTopicRepository, times(2)).save(any(HotTopic.class));
+    }
+
+    @Test
     void collect_should_fallback_to_sample_when_empty_and_db_empty() {
         when(weiboCrawler.source()).thenReturn("weibo");
         when(weiboCrawler.fetch()).thenReturn(List.of());
         when(zhihuCrawler.source()).thenReturn("zhihu");
         when(zhihuCrawler.fetch()).thenReturn(List.of());
         when(hotTopicRepository.count()).thenReturn(0L);
-        when(hotTopicRepository.existsByTitleIgnoreCase(anyString())).thenReturn(false);
+        when(hotTopicRepository.existsByTitleIgnoreCaseAndCollectedAtGreaterThanEqual(anyString(), any()))
+                .thenReturn(false);
         when(hotTopicRepository.save(any(HotTopic.class))).thenAnswer(inv -> inv.getArgument(0));
 
         int added = hotTopicService.collectHotTopics();
@@ -176,7 +208,8 @@ class HotTopicServiceTest {
     @Test
     void seed_sample_should_only_run_when_db_empty() {
         when(hotTopicRepository.count()).thenReturn(0L);
-        when(hotTopicRepository.existsByTitleIgnoreCase(anyString())).thenReturn(false);
+        when(hotTopicRepository.existsByTitleIgnoreCaseAndCollectedAtGreaterThanEqual(anyString(), any()))
+                .thenReturn(false);
         when(hotTopicRepository.save(any(HotTopic.class))).thenAnswer(inv -> inv.getArgument(0));
 
         int seeded = hotTopicService.seedSampleIfEmpty();
@@ -193,5 +226,47 @@ class HotTopicServiceTest {
 
         assertEquals(0, seeded);
         verify(hotTopicRepository, never()).save(any(HotTopic.class));
+    }
+
+    @Test
+    void collect_should_skip_when_already_running() {
+        AtomicBoolean collecting = (AtomicBoolean) ReflectionTestUtils.getField(hotTopicService, "collecting");
+        assertNotNull(collecting);
+        collecting.set(true);
+
+        int added = hotTopicService.collectHotTopics();
+
+        assertEquals(-1, added);
+        verify(weiboCrawler, never()).fetch();
+        verify(zhihuCrawler, never()).fetch();
+    }
+
+    @Test
+    void seed_should_skip_when_collect_running() {
+        AtomicBoolean collecting = (AtomicBoolean) ReflectionTestUtils.getField(hotTopicService, "collecting");
+        assertNotNull(collecting);
+        collecting.set(true);
+
+        int seeded = hotTopicService.seedSampleIfEmpty();
+
+        assertEquals(0, seeded);
+        verify(hotTopicRepository, never()).save(any(HotTopic.class));
+    }
+
+    @Test
+    void guard_should_release_after_collect_finishes() {
+        when(weiboCrawler.source()).thenReturn("weibo");
+        when(weiboCrawler.fetch()).thenReturn(List.of());
+        when(zhihuCrawler.source()).thenReturn("zhihu");
+        when(zhihuCrawler.fetch()).thenReturn(List.of());
+        when(hotTopicRepository.count()).thenReturn(0L);
+        when(hotTopicRepository.existsByTitleIgnoreCaseAndCollectedAtGreaterThanEqual(anyString(), any()))
+                .thenReturn(false);
+        when(hotTopicRepository.save(any(HotTopic.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        hotTopicService.collectHotTopics();
+        int second = hotTopicService.collectHotTopics();
+
+        assertTrue(second >= 0);
     }
 }

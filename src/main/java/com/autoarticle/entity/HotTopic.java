@@ -9,8 +9,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "hot_topics")
-@Getter
+@Table(
+        name = "hot_topics",
+        indexes = @Index(name = "idx_hot_topics_collected_at", columnList = "collected_at"),
+        uniqueConstraints = @UniqueConstraint(name = "uk_hot_topics_title_collected",
+                columnNames = {"title", "collected_at"}))@Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -39,5 +42,6 @@ public class HotTopic {
     private List<Article> articles = new ArrayList<>();
 
     @CreationTimestamp
+    @Column(name = "collected_at", nullable = false, updatable = false)
     private LocalDateTime collectedAt;
 }

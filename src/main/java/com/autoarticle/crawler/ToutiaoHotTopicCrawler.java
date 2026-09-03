@@ -38,7 +38,7 @@ public class ToutiaoHotTopicCrawler extends HttpJsonTopicCrawler {
         }
         int rank = 0;
         for (JsonNode item : data) {
-            String title = clean(item.path("Title").asText(""));
+            String title = clean(firstText(item, "title", "Title"));
             if (title.isBlank()) {
                 continue;
             }
@@ -48,9 +48,19 @@ public class ToutiaoHotTopicCrawler extends HttpJsonTopicCrawler {
                     .source(source())
                     .rank(rank)
                     .hotLevel(levelForRank(rank))
-                    .sourceUrl(item.path("Url").asText(""))
+                    .sourceUrl(firstText(item, "url", "Url"))
                     .build());
         }
         return result;
+    }
+
+    private String firstText(JsonNode item, String... keys) {
+        for (String key : keys) {
+            JsonNode node = item.get(key);
+            if (node != null && node.isTextual() && !node.asText().isBlank()) {
+                return node.asText();
+            }
+        }
+        return "";
     }
 }

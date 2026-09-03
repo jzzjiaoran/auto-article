@@ -13,7 +13,21 @@ class ToutiaoHotTopicCrawlerTest {
     private final ToutiaoHotTopicCrawler crawler = new ToutiaoHotTopicCrawler(new ObjectMapper());
 
     @Test
-    void should_parse_hot_board() throws Exception {
+    void should_parse_hot_board_with_lowercase_keys() throws Exception {
+        String body = "{\"data\":[" +
+                "{\"title\":\"头条热点一\",\"url\":\"https://www.toutiao.com/article/1\"}," +
+                "{\"title\":\"头条热点二\",\"url\":\"https://www.toutiao.com/article/2\"}]}";
+
+        List<HotTopic> topics = crawler.parse(body);
+
+        assertEquals(2, topics.size());
+        assertEquals("头条热点一", topics.get(0).getTitle());
+        assertEquals("toutiao", topics.get(0).getSource());
+        assertEquals("https://www.toutiao.com/article/1", topics.get(0).getSourceUrl());
+    }
+
+    @Test
+    void should_parse_hot_board_with_uppercase_keys_as_fallback() throws Exception {
         String body = "{\"data\":[" +
                 "{\"Title\":\"头条热点一\",\"Url\":\"https://www.toutiao.com/article/1\"}," +
                 "{\"Title\":\"头条热点二\",\"Url\":\"https://www.toutiao.com/article/2\"}]}";
@@ -22,7 +36,6 @@ class ToutiaoHotTopicCrawlerTest {
 
         assertEquals(2, topics.size());
         assertEquals("头条热点一", topics.get(0).getTitle());
-        assertEquals("toutiao", topics.get(0).getSource());
         assertEquals("https://www.toutiao.com/article/1", topics.get(0).getSourceUrl());
     }
 
@@ -34,7 +47,7 @@ class ToutiaoHotTopicCrawlerTest {
 
     @Test
     void should_strip_html_from_title() throws Exception {
-        String body = "{\"data\":[{\"Title\":\"<a>热点</a>\",\"Url\":\"https://www.toutiao.com/article/3\"}]}";
+        String body = "{\"data\":[{\"title\":\"<a>热点</a>\",\"url\":\"https://www.toutiao.com/article/3\"}]}";
         List<HotTopic> topics = crawler.parse(body);
         assertEquals("热点", topics.get(0).getTitle());
     }

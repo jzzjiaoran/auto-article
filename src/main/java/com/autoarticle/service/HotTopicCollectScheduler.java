@@ -22,7 +22,11 @@ public class HotTopicCollectScheduler {
     public void collect() {
         try {
             int added = hotTopicService.collectHotTopics();
-            log.info("[hot-topic] scheduled collect finished, added {}", added);
+            if (added < 0) {
+                log.info("[hot-topic] scheduled collect skipped: another collection/seed is running");
+            } else {
+                log.info("[hot-topic] scheduled collect finished, added {}", added);
+            }
         } catch (Exception e) {
             log.error("[hot-topic] scheduled collect failed", e);
         }

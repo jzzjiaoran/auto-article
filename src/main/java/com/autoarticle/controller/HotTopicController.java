@@ -41,7 +41,11 @@ public class HotTopicController {
     public String collect(RedirectAttributes redirectAttributes) {
         try {
             int added = hotTopicService.collectHotTopics();
-            redirectAttributes.addFlashAttribute("successMessage", "采集完成，新增 " + added + " 条");
+            if (added < 0) {
+                redirectAttributes.addFlashAttribute("successMessage", "有采集/种子任务正在执行，本次已跳过");
+            } else {
+                redirectAttributes.addFlashAttribute("successMessage", "采集完成，新增 " + added + " 条");
+            }
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "采集失败: " + e.getMessage());
         }

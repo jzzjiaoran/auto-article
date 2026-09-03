@@ -21,7 +21,10 @@ public interface HotTopicRepository extends JpaRepository<HotTopic, Long> {
                                  @Param("status") String status,
                                  Pageable pageable);
 
-    boolean existsByTitle(String title);
-
-    boolean existsByTitleIgnoreCase(String title);
+    /**
+     * 同日去重：同一标题只在「当天（collected_at >= startOfDay）」保留一条。
+     * 派生查询映射 LOWER(title)=LOWER(?1) AND collected_at &gt;= ?2，配合 collected_at 索引缩小扫描范围。
+     */
+    boolean existsByTitleIgnoreCaseAndCollectedAtGreaterThanEqual(String title,
+                                                                  java.time.LocalDateTime startOfDay);
 }
