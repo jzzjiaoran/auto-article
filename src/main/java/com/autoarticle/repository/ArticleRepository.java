@@ -15,11 +15,9 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
 
     @Query("SELECT a FROM Article a WHERE " +
            "(:keyword IS NULL OR :keyword = '' OR a.title LIKE %:keyword%) AND " +
-           "(:status IS NULL OR :status = '' OR a.status = :status) " +
-           "ORDER BY CASE WHEN :sort = 'wordCount' THEN a.wordCount ELSE a.updatedAt END DESC")
+           "(:status IS NULL OR :status = '' OR a.status = :status)")
     Page<Article> findByFilters(@Param("keyword") String keyword,
                                 @Param("status") String status,
-                                @Param("sort") String sort,
                                 Pageable pageable);
 
     Page<Article> findByStatusIn(List<String> statuses, Pageable pageable);

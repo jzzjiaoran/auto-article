@@ -11,24 +11,49 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Set;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ArticleService {
 
+    private static final Set<String> SORTABLE_FIELDS = Set.of("createdAt", "updatedAt", "wordCount");
+
     private final ArticleRepository articleRepository;
     private final HotTopicRepository hotTopicRepository;
     private final HtmlSanitizer htmlSanitizer;
 
     public Page<ArticleDto> getArticles(String keyword, String status, String sort, int page, int size) {
-        if (sort == null || sort.isBlank()) {
-            sort = "updatedAt";
-        }
-        return articleRepository.findByFilters(keyword, status, sort, PageRequest.of(page, size))
+        return articleRepository.findByFilters(keyword, status, PageRequest.of(page, size, resolveSort(sort)))
                 .map(this::toDto);
+    }
+
+    /**
+     * 解析前端排序参数 {@code 字段,方向}（如 createdAt,d / wordCount,d），
+     * 仅允许白名单字段，方向可选 asc/a 或 desc/d，缺省为倒序；非法值回退到 updatedAt 倒序。
+     */
+    private Sort resolveSort(String sort) {
+        String field = null;
+        Sort.Direction direction = Sort.Direction.DESC;
+        if (sort != null && !sort.isBlank()) {
+            String[] parts = sort.split(",");
+            field = parts[0].trim();
+            if (parts.length > 1) {
+                String raw = parts[1].trim();
+                if ("asc".equalsIgnoreCase(raw) || "a".equalsIgnoreCase(raw)) {
+                    direction = Sort.Direction.ASC;
+                }
+            }
+        }
+        if (field == null || !SORTABLE_FIELDS.contains(field)) {
+            return Sort.by(Sort.Direction.DESC, "updatedAt");
+        }
+        return Sort.by(direction, field);
     }
 
     public ArticleDto getArticleById(Long id) {
