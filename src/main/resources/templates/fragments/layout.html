@@ -28,37 +28,37 @@
         <div class="collapse navbar-collapse" id="mainNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/}" th:classappend="${#httpServletRequest.requestURI == '/' ? ' active' : ''}">
+                    <a class="nav-link" th:href="@{/}" th:classappend="${currentUri == '/' ? ' active' : ''}">
                         <i class="bi bi-speedometer2 me-1"></i>首页
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/hot-topics}"
-                       th:classappend="${#strings.startsWith(#httpServletRequest.requestURI, '/hot-topics') ? ' active' : ''}">
+                       th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/hot-topics') ? ' active' : ''}">
                         <i class="bi bi-fire me-1"></i>热点管理
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/articles}"
-                       th:classappend="${#strings.startsWith(#httpServletRequest.requestURI, '/articles') ? ' active' : ''}">
+                       th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/articles') ? ' active' : ''}">
                         <i class="bi bi-file-earmark-text me-1"></i>文章管理
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/generate}"
-                       th:classappend="${#strings.startsWith(#httpServletRequest.requestURI, '/generate') ? ' active' : ''}">
+                       th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/generate') ? ' active' : ''}">
                         <i class="bi bi-stars me-1"></i>AI 生成
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/platform-accounts}"
-                       th:classappend="${#strings.startsWith(#httpServletRequest.requestURI, '/platform-accounts') ? ' active' : ''}">
+                       th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/platform-accounts') ? ' active' : ''}">
                         <i class="bi bi-columns-gap me-1"></i>平台管理
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/publish-records}"
-                       th:classappend="${#strings.startsWith(#httpServletRequest.requestURI, '/publish-records') ? ' active' : ''}">
+                       th:classappend="${currentUri != null and #strings.startsWith(currentUri, '/publish-records') ? ' active' : ''}">
                         <i class="bi bi-send me-1"></i>发布管理
                     </a>
                 </li>

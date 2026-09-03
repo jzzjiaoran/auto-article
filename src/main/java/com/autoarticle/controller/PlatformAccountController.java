@@ -1,5 +1,6 @@
 package com.autoarticle.controller;
 
+import com.autoarticle.dto.PlatformAccountDto;
 import com.autoarticle.service.PlatformAccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -24,7 +25,7 @@ public class PlatformAccountController {
 
     @GetMapping("/new")
     public String createForm(Model model) {
-        model.addAttribute("account", Map.of());
+        model.addAttribute("account", new PlatformAccountDto());
         model.addAttribute("credentials", Map.of());
         return "accounts/form";
     }
