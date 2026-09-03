@@ -111,15 +111,15 @@
                 <nav aria-label="文章列表分页">
                     <ul class="pagination pagination-sm mb-0">
                         <li class="page-item" th:classappend="${currentPage <= 0 ? 'disabled' : ''}">
-                            <a class="page-link" th:href="@{/articles(page=${currentPage - 1}, keyword=${param.keyword != null ? param.keyword[0] : ''}, status=${param.status != null ? param.status[0] : ''})}">&laquo;</a>
+                            <a class="page-link" th:href="@{/articles(page=${currentPage - 1}, keyword=${param.keyword != null ? param.keyword[0] : ''}, status=${param.status != null ? param.status[0] : ''}, sort=${param.sort != null ? param.sort[0] : ''})}">&laquo;</a>
                         </li>
                         <li class="page-item" th:each="p : ${#numbers.sequence(0, totalPages - 1)}"
                             th:classappend="${p == currentPage ? 'active' : ''}">
-                            <a class="page-link" th:href="@{/articles(page=${p}, keyword=${param.keyword != null ? param.keyword[0] : ''}, status=${param.status != null ? param.status[0] : ''})}"
+                            <a class="page-link" th:href="@{/articles(page=${p}, keyword=${param.keyword != null ? param.keyword[0] : ''}, status=${param.status != null ? param.status[0] : ''}, sort=${param.sort != null ? param.sort[0] : ''})}"
                                th:text="${p + 1}">1</a>
                         </li>
                         <li class="page-item" th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}">
-                            <a class="page-link" th:href="@{/articles(page=${currentPage + 1}, keyword=${param.keyword != null ? param.keyword[0] : ''}, status=${param.status != null ? param.status[0] : ''})}">&raquo;</a>
+                            <a class="page-link" th:href="@{/articles(page=${currentPage + 1}, keyword=${param.keyword != null ? param.keyword[0] : ''}, status=${param.status != null ? param.status[0] : ''}, sort=${param.sort != null ? param.sort[0] : ''})}">&raquo;</a>
                         </li>
                     </ul>
                 </nav>

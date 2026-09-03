@@ -37,9 +37,16 @@
                     <small class="text-muted">采集于 <span th:text="${#temporals.format(topic.collectedAt, 'yyyy-MM-dd HH:mm')}">--</span></small>
                 </div>
             </div>
-            <a th:href="@{/generate(topicId=${topic.id})}" class="btn btn-primary mt-2">
-                <i class="bi bi-stars me-1"></i>基于此热点生成文章
-            </a>
+            <div class="d-flex gap-2 mt-2 flex-wrap">
+                <form th:action="@{/hot-topics/{id}/refresh(id=${topic.id})}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-repeat me-1"></i>刷新该热点
+                    </button>
+                </form>
+                <a th:href="@{/generate(topicId=${topic.id})}" class="btn btn-primary">
+                    <i class="bi bi-stars me-1"></i>基于此热点生成文章
+                </a>
+            </div>
         </div>
 
         <div th:replace="~{fragments/common :: flashMessages(${successMessage}, ${errorMessage})}"></div>

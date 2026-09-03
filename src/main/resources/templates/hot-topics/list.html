@@ -12,11 +12,6 @@
             <h1 class="h3 fw-bold mb-1">热点管理</h1>
             <p class="text-muted mb-0">网络热点收集、筛选与分类</p>
         </div>
-        <form th:action="@{/hot-topics/refresh}" method="post" class="mt-2 mt-sm-0">
-            <button type="submit" class="btn btn-outline-primary">
-                <i class="bi bi-arrow-repeat me-1"></i>手动采集
-            </button>
-        </form>
     </div>
 
     <!-- 搜索结果/错误提示 -->
@@ -73,6 +68,7 @@
                         <th scope="col">热度</th>
                         <th scope="col">状态</th>
                         <th scope="col" class="text-end pe-3">采集时间</th>
+                        <th scope="col" class="text-end pe-3">操作</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -103,10 +99,18 @@
                         </td>
                         <td class="text-end pe-3 small text-muted"
                             th:text="${#temporals.format(topic.collectedAt, 'MM-dd HH:mm')}">--</td>
+                        <td class="text-end pe-3 text-nowrap">
+                            <form th:action="@{/hot-topics/{id}/refresh(id=${topic.id})}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary"
+                                        th:attr="data-confirm=|刷新热点「${topic.title}」？将重新拉取最新内容。|">
+                                    <i class="bi bi-arrow-repeat"></i><span class="d-none d-md-inline ms-1">刷新</span>
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(topics)}">
-                        <td colspan="6" class="text-center">
-                            <th:block th:replace="~{fragments/common :: emptyState('暂无热点数据', '点击右上角「手动采集」抓取最新网络热点')}"></th:block>
+                        <td colspan="7" class="text-center">
+                            <th:block th:replace="~{fragments/common :: emptyState('暂无热点数据', '热点由定时任务自动采集，可稍后刷新页面查看')}"></th:block>
                         </td>
                     </tr>
                     </tbody>

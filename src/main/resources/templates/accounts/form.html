@@ -11,7 +11,7 @@
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-1">
-                    <li class="breadcrumb-item"><a th:href="@{/accounts}" class="text-decoration-none">平台管理</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/platform-accounts}" class="text-decoration-none">平台管理</a></li>
                     <li class="breadcrumb-item active" aria-current="page">
                         <span th:text="${account.id != null ? '编辑账号' : '添加账号'}">添加账号</span>
                     </li>
@@ -27,7 +27,7 @@
         <div class="col-lg-8 col-xl-6">
             <div class="card">
                 <div class="card-body">
-                    <form th:action="@{/accounts}" method="post" class="needs-validation" novalidate>
+                    <form th:action="@{/platform-accounts}" method="post" class="needs-validation" novalidate>
                         <input type="hidden" name="id" th:if="${account.id != null}" th:value="${account.id}">
                         <input type="hidden" name="_method" th:if="${account.id != null}" value="put">
 
@@ -107,7 +107,7 @@
                             <button type="submit" class="btn btn-primary">
                                 <i class="bi bi-save me-1"></i>保存
                             </button>
-                            <a th:href="@{/accounts}" class="btn btn-outline-secondary">取消</a>
+                            <a th:href="@{/platform-accounts}" class="btn btn-outline-secondary">取消</a>
                         </div>
                     </form>
                 </div>

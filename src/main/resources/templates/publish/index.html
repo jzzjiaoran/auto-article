@@ -22,7 +22,7 @@
             <div class="card">
                 <div class="card-header">一键发布</div>
                 <div class="card-body">
-                    <form th:action="@{/publish}" method="post" class="needs-validation" novalidate>
+                    <form th:action="@{/publish-records}" method="post" class="needs-validation" novalidate>
                         <div class="mb-3">
                             <label for="publishArticle" class="form-label">选择文章 <span class="text-danger">*</span></label>
                             <select id="publishArticle" name="articleId" class="form-select" required>
@@ -41,7 +41,7 @@
                         <div class="mb-3">
                             <label class="form-label">发布到平台 <span class="text-danger">*</span></label>
                             <div th:if="${#lists.isEmpty(accounts)}" class="text-muted small">
-                                暂无平台账号，请先前往<a th:href="@{/accounts}">平台管理</a>添加。
+                                暂无平台账号，请先前往<a th:href="@{/platform-accounts}">平台管理</a>添加。
                             </div>
                             <div class="list-group" th:if="${!#lists.isEmpty(accounts)}">
                                 <label th:each="acc : ${accounts}" class="list-group-item d-flex align-items-center gap-2">
@@ -125,14 +125,14 @@
                         <nav aria-label="发布记录分页">
                             <ul class="pagination pagination-sm mb-0">
                                 <li class="page-item" th:classappend="${currentPage <= 0 ? 'disabled' : ''}">
-                                    <a class="page-link" th:href="@{/publish(page=${currentPage - 1})}">&laquo;</a>
+                                    <a class="page-link" th:href="@{/publish-records(page=${currentPage - 1})}">&laquo;</a>
                                 </li>
                                 <li class="page-item" th:each="p : ${#numbers.sequence(0, totalPages - 1)}"
                                     th:classappend="${p == currentPage ? 'active' : ''}">
-                                    <a class="page-link" th:href="@{/publish(page=${p})}" th:text="${p + 1}">1</a>
+                                    <a class="page-link" th:href="@{/publish-records(page=${p})}" th:text="${p + 1}">1</a>
                                 </li>
                                 <li class="page-item" th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}">
-                                    <a class="page-link" th:href="@{/publish(page=${currentPage + 1})}">&raquo;</a>
+                                    <a class="page-link" th:href="@{/publish-records(page=${currentPage + 1})}">&raquo;</a>
                                 </li>
                             </ul>
                         </nav>

@@ -38,7 +38,13 @@
                 <a th:href="@{/articles/{id}/edit(id=${article.id})}" class="btn btn-outline-primary">
                     <i class="bi bi-pencil me-1"></i>编辑
                 </a>
-                <a th:href="@{/publish(articleId=${article.id})}" class="btn btn-success">
+                <form th:action="@{/articles/{id}/generate(id=${article.id})}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-secondary"
+                            th:attr="data-confirm=|基于当前热点重新生成文章「${article.title}」？现有正文将被覆盖。|">
+                        <i class="bi bi-stars me-1"></i>重新生成
+                    </button>
+                </form>
+                <a th:href="@{/publish-records(articleId=${article.id})}" class="btn btn-success">
                     <i class="bi bi-send me-1"></i>发布
                 </a>
             </div>

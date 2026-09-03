@@ -12,7 +12,7 @@
             <h1 class="h3 fw-bold mb-1">平台管理</h1>
             <p class="text-muted mb-0">管理公众号、小红书、知乎、头条等平台账号</p>
         </div>
-        <a th:href="@{/accounts/new}" class="btn btn-primary mt-2 mt-sm-0">
+        <a th:href="@{/platform-accounts/new}" class="btn btn-primary mt-2 mt-sm-0">
             <i class="bi bi-plus-lg me-1"></i>添加账号
         </a>
     </div>
@@ -56,18 +56,18 @@
                         <td class="small text-muted"
                             th:text="${account.lastVerifyAt != null ? #temporals.format(account.lastVerifyAt, 'yyyy-MM-dd HH:mm') : '--'}">--</td>
                         <td class="text-end pe-3 text-nowrap">
-                            <form th:action="@{/accounts/{id}/verify(id=${account.id})}" method="post" class="d-inline">
+                            <form th:action="@{/platform-accounts/{id}/verify(id=${account.id})}" method="post" class="d-inline">
                                 <button type="submit" class="btn btn-sm btn-outline-success">
                                     <i class="bi bi-shield-check"></i><span class="d-none d-md-inline ms-1">验证</span>
                                 </button>
                             </form>
-                            <a th:href="@{/accounts/{id}/edit(id=${account.id})}" class="btn btn-sm btn-outline-primary">
+                            <a th:href="@{/platform-accounts/{id}/edit(id=${account.id})}" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-pencil"></i><span class="d-none d-md-inline ms-1">编辑</span>
                             </a>
-                            <form th:action="@{/accounts/{id}(id=${account.id})}" method="post" class="d-inline">
+                            <form th:action="@{/platform-accounts/{id}(id=${account.id})}" method="post" class="d-inline">
                                 <input type="hidden" name="_method" value="delete">
                                 <button type="submit" class="btn btn-sm btn-outline-danger"
-                                        data-confirm="确定删除账号「' + ${account.name} + '」吗？此操作不可恢复。">
+                                        th:attr="data-confirm=|确定删除账号「${account.name}」吗？此操作不可恢复。|">
                                     <i class="bi bi-trash"></i><span class="d-none d-md-inline ms-1">删除</span>
                                 </button>
                             </form>

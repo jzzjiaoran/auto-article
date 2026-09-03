@@ -51,14 +51,14 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/accounts}"
-                       th:classappend="${#strings.startsWith(#httpServletRequest.requestURI, '/accounts') ? ' active' : ''}">
+                    <a class="nav-link" th:href="@{/platform-accounts}"
+                       th:classappend="${#strings.startsWith(#httpServletRequest.requestURI, '/platform-accounts') ? ' active' : ''}">
                         <i class="bi bi-columns-gap me-1"></i>平台管理
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" th:href="@{/publish}"
-                       th:classappend="${#strings.startsWith(#httpServletRequest.requestURI, '/publish') ? ' active' : ''}">
+                    <a class="nav-link" th:href="@{/publish-records}"
+                       th:classappend="${#strings.startsWith(#httpServletRequest.requestURI, '/publish-records') ? ' active' : ''}">
                         <i class="bi bi-send me-1"></i>发布管理
                     </a>
                 </li>
