@@ -167,6 +167,19 @@
     link.classList.remove("d-none");
   }
 
+  function setButtonLoading(btn) {
+    if (!btn) return;
+    btn.dataset.original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>处理中...';
+  }
+
+  function restoreButton(btn) {
+    if (!btn) return;
+    btn.disabled = false;
+    if (btn.dataset.original) btn.innerHTML = btn.dataset.original;
+  }
+
   /* 轮询单个生成任务并刷新进度面板；stopWhenDone 为 true 时到达终态即停止 */
   function pollGenerationTask(taskId, stopWhenDone, onDone) {
     if (!taskId) return;
@@ -217,11 +230,7 @@
       event.preventDefault();
       event.stopPropagation();
 
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.dataset.original = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>提交中...';
-      }
+      setButtonLoading(submitBtn);
 
       var topicSelect = document.getElementById("topicSelect");
       var titleInput = document.getElementById("articleTitle");
@@ -250,20 +259,18 @@
         .then(function (body) {
           if (!isResultOk(body)) {
             showToast(extractErrorMessage(body, "提交失败，请稍后重试"), "danger");
+            restoreButton(submitBtn);
             return;
           }
           var taskId = body.data;
           setGenerationState("任务已提交，正在排队...", "running");
-          pollGenerationTask(taskId, false);
+          pollGenerationTask(taskId, false, function () {
+            restoreButton(submitBtn);
+          });
         })
         .catch(function () {
           showToast("网络异常，提交失败，请稍后重试", "danger");
-        })
-        .finally(function () {
-          if (submitBtn) {
-            submitBtn.disabled = false;
-            if (submitBtn.dataset.original) submitBtn.innerHTML = submitBtn.dataset.original;
-          }
+          restoreButton(submitBtn);
         });
     });
   }
@@ -278,11 +285,7 @@
       event.preventDefault();
       event.stopPropagation();
 
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.dataset.original = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>生成中...';
-      }
+      setButtonLoading(submitBtn);
 
       fetch(form.action, {
         method: "POST",
@@ -292,7 +295,7 @@
         .then(function (body) {
           if (!isResultOk(body)) {
             showToast(extractErrorMessage(body, "重新生成提交失败"), "danger");
-            if (submitBtn) submitBtn.disabled = false;
+            restoreButton(submitBtn);
             return;
           }
           var taskId = body.data;
@@ -302,13 +305,13 @@
               window.location.reload();
             } else {
               showToast(message || "重新生成失败", "danger");
-              if (submitBtn) submitBtn.disabled = false;
+              restoreButton(submitBtn);
             }
           });
         })
         .catch(function () {
           showToast("网络异常，重新生成提交失败", "danger");
-          if (submitBtn) submitBtn.disabled = false;
+          restoreButton(submitBtn);
         });
     });
   }
