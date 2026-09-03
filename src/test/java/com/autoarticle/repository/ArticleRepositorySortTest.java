@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,18 +24,23 @@ class ArticleRepositorySortTest {
     @Autowired
     private ArticleRepository articleRepository;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     private Article articleA;
     private Article articleB;
 
     @BeforeEach
     void setUp() {
-        articleA = article(TITLE_A,
-                LocalDateTime.of(2026, 1, 1, 10, 0),
-                1000);
-        articleB = article(TITLE_B,
-                LocalDateTime.of(2026, 9, 1, 9, 0),
-                100);
-        articleRepository.saveAll(List.of(articleB, articleA));
+        articleA = article(TITLE_A, 1000);
+        articleB = article(TITLE_B, 100);
+
+        // Article.createdAt is annotated with @CreationTimestamp, which ignores any explicit
+        // value on INSERT and stamps ~now(). Overwrite the created_at column directly so the two
+        // rows carry distinct, deterministic timestamps and the ordering assertion no longer
+        // depends on insertion order or clock resolution.
+        overrideCreatedAt(articleA.getId(), LocalDateTime.of(2026, 1, 1, 10, 0));
+        overrideCreatedAt(articleB.getId(), LocalDateTime.of(2026, 9, 1, 9, 0));
     }
 
     @Test
@@ -71,14 +77,16 @@ class ArticleRepositorySortTest {
         return page.getContent().stream().map(Article::getTitle).toList();
     }
 
-    private Article article(String title, LocalDateTime createdAt, int wordCount) {
-        Article article = Article.builder()
+    private Article article(String title, int wordCount) {
+        return articleRepository.saveAndFlush(Article.builder()
                 .title(title)
                 .status("draft")
                 .wordCount(wordCount)
-                .createdAt(createdAt)
-                .build();
-        return articleRepository.save(article);
+                .build());
+    }
+
+    private void overrideCreatedAt(Long id, LocalDateTime createdAt) {
+        jdbcTemplate.update("UPDATE articles SET created_at = ? WHERE id = ?", createdAt, id);
     }
 
     private void touch(Article article) {
