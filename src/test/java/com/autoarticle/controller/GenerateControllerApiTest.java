@@ -32,8 +32,8 @@ class GenerateControllerApiTest {
         mockMvc.perform(get("/tasks/doesnotexist").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(1004))
-                .andExpect(jsonPath("$.message", containsString("不存在")))
-                .andExpect(jsonPath("$.message", not(containsString("ID: null"))));
+                .andExpect(jsonPath("$.message").value(containsString("不存在")))
+                .andExpect(jsonPath("$.message").value(not(containsString("ID: null"))));
     }
 
     @Test
@@ -44,9 +44,9 @@ class GenerateControllerApiTest {
                         .content("{\"style\":\"story\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(1001))
-                .andExpect(jsonPath("$.message", containsString("文章标题不能为空")))
-                .andExpect(jsonPath("$.message", not(containsString("NULL not allowed"))))
-                .andExpect(jsonPath("$.message", not(containsString("insert into articles"))));
+                .andExpect(jsonPath("$.message").value(containsString("文章标题不能为空")))
+                .andExpect(jsonPath("$.message").value(not(containsString("NULL not allowed"))))
+                .andExpect(jsonPath("$.message").value(not(containsString("insert into articles"))));
     }
 
     @Test
@@ -57,7 +57,7 @@ class GenerateControllerApiTest {
                         .content("{\"title\":\"x\",\"topicId\":999999}"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(1004))
-                .andExpect(jsonPath("$.message", containsString("热点 不存在")));
+                .andExpect(jsonPath("$.message").value(containsString("热点 不存在")));
     }
 
     @Test
