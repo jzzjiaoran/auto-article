@@ -1,23 +1,21 @@
 package com.autoarticle.crawler;
 
+import com.autoarticle.entity.HotTopic;
+
 import java.util.List;
 
 /**
- * 网络热点抓取器接口。每个实现负责抓取一个平台的热点榜单，
- * 返回规范化后的热点列表。抓取失败时实现应记录日志并返回空列表（降级），
- * 由上层聚合采集逻辑决定是否回退到示例数据。
+ * 网络热点抓取器。每个实现抓取一个平台（微博/知乎/头条…）的热点榜单，
+ * 字段映射到 {@link HotTopic} 的 title / source / rank / hotLevel / sourceUrl，status 默认 unused。
  */
 public interface TopicCrawler {
 
-    /**
-     * 来源标识：weibo / zhihu / toutiao / sample
-     */
+    /** 来源标识：weibo / zhihu / toutiao … */
     String source();
 
     /**
-     * 抓取该平台的热点榜单。
-     *
-     * @return 规范化后的热点列表；失败时返回空列表而非抛出异常
+     * 抓取热点榜单。实现方负责对内容做基础清洗（去除标签/脚本、trim），
+     * 失败时应记录日志并返回空列表（由采集编排逐源隔离异常，不影响其它源）。
      */
-    List<CrawledTopic> fetch();
+    List<HotTopic> fetch();
 }

@@ -13,7 +13,8 @@
             <p class="text-muted mb-0">网络热点收集、筛选与分类</p>
         </div>
         <form th:action="@{/hot-topics/collect}" method="post" class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary"
+                    th:attr="data-confirm=|确定立即采集网络热点吗？将抓取微博/知乎/头条热榜并去重入库。|">
                 <i class="bi bi-cloud-download me-1"></i><span class="d-none d-md-inline">立即采集</span>
             </button>
         </form>

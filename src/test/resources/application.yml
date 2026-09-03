@@ -13,12 +13,11 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
 
 app:
+  crawler:
+    enabled: false
+    cron: "0 */30 * * * *"
   hot-topic:
-    collect:
-      enabled: false
-      cron: "0 0 * * * *"
-      crawler-enabled: false
-      fallback-sample-enabled: true
+    fallback-sample-enabled: true
     seed-on-start: false
   llm:
     api-key: test-key

@@ -1,16 +1,18 @@
 package com.autoarticle.crawler;
 
+import com.autoarticle.entity.HotTopic;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * 微博热搜抓取器（真实 HTTP，失败自动降级为空列表）。
- * 数据源：微博热搜榜 JSON 接口。
  */
 @Component
 @RequiredArgsConstructor
@@ -29,36 +31,36 @@ public class WeiboHotTopicCrawler extends HttpJsonTopicCrawler {
     }
 
     @Override
-    protected List<CrawledTopic> parse(String body) throws Exception {
+    protected List<HotTopic> parse(String body) throws Exception {
         JsonNode root = objectMapper.readTree(body);
-        JsonNode data = root.path("data");
-        JsonNode realtime = data.path("realtime");
-        List<CrawledTopic> result = new ArrayList<>();
+        JsonNode realtime = root.path("data").path("realtime");
+        List<HotTopic> result = new ArrayList<>();
         if (!realtime.isArray()) {
             return result;
         }
         int rank = 0;
         for (JsonNode item : realtime) {
-            JsonNode word = item.path("word");
-            if (word.isMissingNode() || word.asText().isBlank()) {
-                continue;
-            }
-            if (item.path("is_ad").asBoolean(false)) {
+            String word = item.path("word").asText("");
+            if (word.isBlank() || item.path("is_ad").asBoolean(false)) {
                 continue;
             }
             rank++;
-            result.add(CrawledTopic.builder()
-                    .title(word.asText().replace("#", "").trim())
+            String title = clean(word).replace("#", "");
+            if (title.isBlank()) {
+                continue;
+            }
+            result.add(HotTopic.builder()
+                    .title(title)
                     .source(source())
                     .rank(rank)
                     .hotLevel(levelForRank(rank))
-                    .sourceUrl(buildSearchUrl(word.asText()))
+                    .sourceUrl(searchUrl(title))
                     .build());
         }
         return result;
     }
 
-    private String buildSearchUrl(String word) {
-        return "https://s.weibo.com/weibo?q=" + java.net.URLEncoder.encode(word, java.nio.charset.StandardCharsets.UTF_8);
+    private String searchUrl(String title) {
+        return "https://s.weibo.com/weibo?q=" + URLEncoder.encode(title, StandardCharsets.UTF_8);
     }
 }

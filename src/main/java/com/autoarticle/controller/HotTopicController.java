@@ -1,6 +1,5 @@
 package com.autoarticle.controller;
 
-import com.autoarticle.dto.HotTopicCollectResult;
 import com.autoarticle.service.HotTopicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -41,8 +40,8 @@ public class HotTopicController {
     @PostMapping("/collect")
     public String collect(RedirectAttributes redirectAttributes) {
         try {
-            HotTopicCollectResult result = hotTopicService.collectHotTopics();
-            redirectAttributes.addFlashAttribute("successMessage", result.toMessage());
+            int added = hotTopicService.collectHotTopics();
+            redirectAttributes.addFlashAttribute("successMessage", "采集完成，新增 " + added + " 条");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "采集失败: " + e.getMessage());
         }

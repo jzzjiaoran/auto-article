@@ -1,6 +1,6 @@
 package com.autoarticle.config;
 
-import com.autoarticle.service.HotTopicCollectionService;
+import com.autoarticle.service.HotTopicService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class HotTopicSampleDataInitializer implements CommandLineRunner {
 
-    private final HotTopicCollectionService hotTopicCollectionService;
+    private final HotTopicService hotTopicService;
 
     @Value("${app.hot-topic.seed-on-start:true}")
     private boolean seedOnStart;
@@ -27,7 +27,7 @@ public class HotTopicSampleDataInitializer implements CommandLineRunner {
             return;
         }
         try {
-            int seeded = hotTopicCollectionService.seedSampleIfEmpty();
+            int seeded = hotTopicService.seedSampleIfEmpty();
             if (seeded > 0) {
                 log.info("[hot-topic] seeded {} sample hot topics on startup", seeded);
             }

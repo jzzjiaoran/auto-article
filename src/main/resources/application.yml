@@ -22,15 +22,13 @@ spring:
     encoding: UTF-8
 
 app:
+  crawler:
+    # 热点定时采集 cron（默认每 30 分钟）；app.crawler.enabled=false 可停用定时任务
+    enabled: true
+    cron: "0 */30 * * * *"
   hot-topic:
-    collect:
-      # 定时采集 cron（每小时），可通过 app.hot-topic.collect.enabled=false 停用
-      enabled: true
-      cron: "0 0 * * * *"
-      # 是否启用真实平台抓取
-      crawler-enabled: true
-      # 真实抓取无结果且库为空时，回退内置示例/种子数据
-      fallback-sample-enabled: true
+    # 真实抓取无结果且库为空时，回退内置示例/种子数据
+    fallback-sample-enabled: true
     # 全新环境启动时写入示例热点，保证列表与生成链路可用
     seed-on-start: true
   credentials:

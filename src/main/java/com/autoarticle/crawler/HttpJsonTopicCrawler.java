@@ -1,27 +1,28 @@
 package com.autoarticle.crawler;
 
+import com.autoarticle.entity.HotTopic;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
 import org.springframework.http.*;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * HTTP 抓取公共基类：负责携带 UA 头、超时控制与请求/降级兜底。
- * 子类只需实现 source()、请求 URL 与 JSON 解析；任何网络/解析异常都会被捕获并降级为空列表。
+ * HTTP 抓取公共基类：携带 UA 头、超时控制，解析失败/网络失败时降级为空列表。
+ * 子类只需实现 source()、请求 URL 与 JSON 解析。
  */
 @Slf4j
 public abstract class HttpJsonTopicCrawler implements TopicCrawler {
 
-    private static final Duration TIMEOUT = Duration.ofSeconds(8);
+    private static final int TIMEOUT_SECONDS = 8;
 
     private final RestTemplate restTemplate = buildRestTemplate();
 
     @Override
-    public List<CrawledTopic> fetch() {
+    public List<HotTopic> fetch() {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.set(HttpHeaders.USER_AGENT, buildUserAgent());
@@ -44,7 +45,7 @@ public abstract class HttpJsonTopicCrawler implements TopicCrawler {
 
     protected abstract String requestUrl();
 
-    protected abstract List<CrawledTopic> parse(String body) throws Exception;
+    protected abstract List<HotTopic> parse(String body) throws Exception;
 
     protected static String levelForRank(int rank) {
         if (rank <= 5) {
@@ -61,11 +62,18 @@ public abstract class HttpJsonTopicCrawler implements TopicCrawler {
                 + "(KHTML, like Gecko) Chrome/120.0 Safari/537.36";
     }
 
+    protected String clean(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        return Jsoup.parse(raw).text().trim();
+    }
+
     private RestTemplate buildRestTemplate() {
         org.springframework.http.client.SimpleClientHttpRequestFactory factory =
                 new org.springframework.http.client.SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(8));
-        factory.setReadTimeout((int) TimeUnit.SECONDS.toMillis(8));
+        factory.setConnectTimeout((int) TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS));
+        factory.setReadTimeout((int) TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS));
         return new RestTemplate(factory);
     }
 }

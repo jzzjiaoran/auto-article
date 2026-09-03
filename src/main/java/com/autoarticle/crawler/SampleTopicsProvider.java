@@ -1,21 +1,22 @@
 package com.autoarticle.crawler;
 
+import com.autoarticle.entity.HotTopic;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 内置示例热点数据源。
+ * 内置示例/种子热点数据源。
  *
- * 真实平台抓取在无外网或平台反爬时会返回空列表；为保证全新环境列表页有数据、主链路可走通，
- * 采集流程可在真实抓取结果为空时回退到此处提供的示例/种子数据（第一阶段方案，见 JZZ-16）。
+ * 全新环境（无外网或平台反爬导致真实抓取为空）下，由 {@code HotTopicService} 在库为空时
+ * 回退到本示例数据，保证热点列表与「热点 → 生成文章」主链路可用（第一阶段方案，见 JZZ-16）。
  */
 @Component
 public class SampleTopicsProvider {
 
-    public List<CrawledTopic> topics() {
-        List<CrawledTopic> list = new ArrayList<>();
+    public List<HotTopic> topics() {
+        List<HotTopic> list = new ArrayList<>();
         list.add(topic("国内旅游市场持续升温 多地景区迎来客流高峰", "weibo", 1, "high",
                 "https://s.weibo.com/weibo?q=%E6%97%85%E6%B8%B8"));
         list.add(topic("新一轮科技革命带动产业升级 人工智能应用加速落地", "weibo", 2, "high",
@@ -51,12 +52,13 @@ public class SampleTopicsProvider {
         return list;
     }
 
-    private CrawledTopic topic(String title, String source, int rank, String hotLevel, String sourceUrl) {
-        return CrawledTopic.builder()
+    private HotTopic topic(String title, String source, int rank, String hotLevel, String sourceUrl) {
+        return HotTopic.builder()
                 .title(title)
                 .source(source)
                 .rank(rank)
                 .hotLevel(hotLevel)
+                .status("unused")
                 .sourceUrl(sourceUrl)
                 .build();
     }
