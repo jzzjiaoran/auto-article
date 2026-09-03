@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+<head>
+    <title>服务器错误</title>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <div class="card p-5 text-center mx-auto" style="max-width: 480px;">
+        <div class="display-1 fw-bold text-danger">500</div>
+        <h1 class="h4 mt-3 mb-2">服务器开小差了</h1>
+        <p class="text-muted mb-4">抱歉，处理请求时发生错误，请稍后重试。</p>
+        <th:block th:if="${message != null and !#strings.isEmpty(message)}">
+            <p class="small text-muted" th:text="${message}">错误详情</p>
+        </th:block>
+        <a th:href="@{/}" class="btn btn-primary mx-auto">
+            <i class="bi bi-house me-1"></i>返回首页
+        </a>
+    </div>
+</th:block>
+</body>
+</html>

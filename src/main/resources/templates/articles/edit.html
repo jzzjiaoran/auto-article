@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+<head>
+    <title>文章编辑</title>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a th:href="@{/articles}" class="text-decoration-none">文章管理</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <span th:text="${article.id != null ? '编辑文章' : '新建文章'}">编辑文章</span>
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold mb-1" th:text="${article.id != null ? article.title : '新建文章'}">文章标题</h1>
+        </div>
+    </div>
+
+    <th:block th:if="${article != null and article.id != null}">
+        <div th:replace="~{fragments/common :: flashMessages(${successMessage}, ${errorMessage})}"></div>
+    </th:block>
+
+    <form th:action="@{/articles/{id}(id=${article.id})}"
+          th:if="${article != null and article.id != null}"
+          th:method="put" class="needs-validation" novalidate>
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="card mb-3">
+                    <div class="card-header">正文编辑</div>
+                    <div class="card-body article-editor-wrap">
+                        <div class="editor-toolbar d-flex flex-wrap gap-1 mb-2" role="toolbar" aria-label="编辑器工具栏">
+                            <button type="button" class="btn btn-sm btn-light" data-action="h2" title="二级标题">H2</button>
+                            <button type="button" class="btn btn-sm btn-light" data-action="h3" title="三级标题">H3</button>
+                            <button type="button" class="btn btn-sm btn-light" data-action="bold" title="加粗">
+                                <i class="bi bi-type-bold"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-light" data-action="italic" title="斜体">
+                                <i class="bi bi-type-italic"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-light" data-action="link" title="链接">
+                                <i class="bi bi-link-45deg"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-light" data-action="list" title="列表">
+                                <i class="bi bi-list-ul"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-light" data-action="quote" title="引用">
+                                <i class="bi bi-quote"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-light" data-action="code" title="代码块">
+                                <i class="bi bi-code-slash"></i>
+                            </button>
+                        </div>
+                        <textarea id="articleContent" name="content" class="form-control" rows="16"
+                                  placeholder="在此输入文章正文（支持 Markdown）..."
+                                  th:text="${article.content}" required></textarea>
+                        <div class="invalid-feedback">正文内容不能为空</div>
+                        <div class="d-flex justify-content-between mt-2 small text-muted">
+                            <span>支持 Markdown 语法</span>
+                            <span>字数：<span id="articleWordCount" th:text="${article.wordCount}">0</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mb-3">
+                    <div class="card-header">基本信息</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="articleTitle" class="form-label">标题 <span class="text-danger">*</span></label>
+                            <input type="text" id="articleTitle" name="title" class="form-control"
+                                   th:value="${article.title}" maxlength="255" required>
+                            <div class="invalid-feedback">请输入文章标题</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="articleSummary" class="form-label">摘要</label>
+                            <textarea id="articleSummary" name="summary" rows="3" class="form-control" maxlength="500"
+                                      th:text="${article.summary}" placeholder="选填，用于列表展示"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">状态</label>
+                            <div>
+                                <span class="badge text-bg-secondary" th:if="${article.status == 'draft'}">草稿</span>
+                                <span class="badge text-bg-info" th:if="${article.status == 'generated'}">已生成</span>
+                                <span class="badge text-bg-success" th:if="${article.status == 'published'}">已发布</span>
+                                <span class="badge text-bg-danger" th:if="${article.status == 'failed'}">失败</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">发布</div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">保存后可前往发布管理页一键发布到多平台。</p>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>保存修改
+                            </button>
+                            <a th:href="@{/articles/{id}(id=${article.id})}" class="btn btn-outline-secondary">取消</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- 无文章 id 时的提示（正常流程从编辑入口进入，此处兜底） -->
+    <div th:if="${article == null or article.id == null}">
+        <div class="card p-5 text-center">
+            <h2 class="h4 mb-3">文章不存在或无法编辑</h2>
+            <a th:href="@{/articles}" class="btn btn-primary mx-auto">返回文章列表</a>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

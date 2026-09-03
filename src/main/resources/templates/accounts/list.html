@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+<head>
+    <title>平台管理</title>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1">平台管理</h1>
+            <p class="text-muted mb-0">管理公众号、小红书、知乎、头条等平台账号</p>
+        </div>
+        <a th:href="@{/accounts/new}" class="btn btn-primary mt-2 mt-sm-0">
+            <i class="bi bi-plus-lg me-1"></i>添加账号
+        </a>
+    </div>
+
+    <div th:replace="~{fragments/common :: flashMessages(${successMessage}, ${errorMessage})}"></div>
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th scope="col" class="ps-3">账号名称</th>
+                        <th scope="col">平台</th>
+                        <th scope="col">授权状态</th>
+                        <th scope="col">最近验证</th>
+                        <th scope="col" class="text-end pe-3">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="account : ${accounts}">
+                        <td class="ps-3 fw-medium" th:text="${account.name}">账号名称</td>
+                        <td>
+                            <span class="badge text-bg-light border" th:switch="${account.platform}">
+                                <span th:case="'gzh'"><i class="bi bi-wechat me-1"></i>公众号</span>
+                                <span th:case="'xiaohongshu'"><i class="bi bi-heart me-1"></i>小红书</span>
+                                <span th:case="'zhihu'"><i class="bi bi-pencil me-1"></i>知乎</span>
+                                <span th:case="'toutiao'"><i class="bi bi-newspaper me-1"></i>头条</span>
+                                <span th:case="*" th:text="${account.platform}"></span>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge text-bg-warning" th:if="${account.status == 'unverified'}">
+                                <i class="bi bi-shield-slash me-1"></i>未验证
+                            </span>
+                            <span class="badge text-bg-success" th:if="${account.status == 'verified'}">
+                                <i class="bi bi-shield-check me-1"></i>已验证
+                            </span>
+                            <span class="badge text-bg-secondary" th:if="${account.status == 'disabled'}">已禁用</span>
+                        </td>
+                        <td class="small text-muted"
+                            th:text="${account.lastVerifyAt != null ? #temporals.format(account.lastVerifyAt, 'yyyy-MM-dd HH:mm') : '--'}">--</td>
+                        <td class="text-end pe-3 text-nowrap">
+                            <form th:action="@{/accounts/{id}/verify(id=${account.id})}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-shield-check"></i><span class="d-none d-md-inline ms-1">验证</span>
+                                </button>
+                            </form>
+                            <a th:href="@{/accounts/{id}/edit(id=${account.id})}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-pencil"></i><span class="d-none d-md-inline ms-1">编辑</span>
+                            </a>
+                            <form th:action="@{/accounts/{id}(id=${account.id})}" method="post" class="d-inline">
+                                <input type="hidden" name="_method" value="delete">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        data-confirm="确定删除账号「' + ${account.name} + '」吗？此操作不可恢复。">
+                                    <i class="bi bi-trash"></i><span class="d-none d-md-inline ms-1">删除</span>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(accounts)}">
+                        <td colspan="5" class="text-center">
+                            <th:block th:replace="~{fragments/common :: emptyState('暂无平台账号', '点击「添加账号」配置你的发布平台')}"></th:block>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

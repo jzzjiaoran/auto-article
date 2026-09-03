@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+<head>
+    <title>发布管理</title>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1">发布管理</h1>
+            <p class="text-muted mb-0">一键发布文章到多平台，跟踪发布状态与历史记录</p>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/common :: flashMessages(${successMessage}, ${errorMessage})}"></div>
+
+    <div class="row g-3">
+        <!-- 一键发布 -->
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header">一键发布</div>
+                <div class="card-body">
+                    <form th:action="@{/publish}" method="post" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="publishArticle" class="form-label">选择文章 <span class="text-danger">*</span></label>
+                            <select id="publishArticle" name="articleId" class="form-select" required>
+                                <option value="">请选择文章</option>
+                                <option th:each="art : ${publishableArticles}"
+                                        th:value="${art.id}"
+                                        th:selected="${selectedArticleId != null and selectedArticleId == art.id}"
+                                        th:text="${art.title}">文章标题</option>
+                            </select>
+                            <div class="invalid-feedback">请选择要发布的文章</div>
+                            <div class="form-text" th:if="${#lists.isEmpty(publishableArticles)}">
+                                暂无可发布的文章，请先<a th:href="@{/generate}">生成文章</a>。
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">发布到平台 <span class="text-danger">*</span></label>
+                            <div th:if="${#lists.isEmpty(accounts)}" class="text-muted small">
+                                暂无平台账号，请先前往<a th:href="@{/accounts}">平台管理</a>添加。
+                            </div>
+                            <div class="list-group" th:if="${!#lists.isEmpty(accounts)}">
+                                <label th:each="acc : ${accounts}" class="list-group-item d-flex align-items-center gap-2">
+                                    <input class="form-check-input me-1" type="checkbox" name="accountIds"
+                                           th:value="${acc.id}" th:checked="${selectedAccountIds != null and #lists.contains(selectedAccountIds, acc.id)}">
+                                    <span class="fw-medium" th:text="${acc.name}">账号</span>
+                                    <span class="badge text-bg-success ms-auto" th:if="${acc.status == 'verified'}">已验证</span>
+                                    <span class="badge text-bg-warning ms-auto" th:if="${acc.status != 'verified'}">未验证</span>
+                                </label>
+                            </div>
+                            <div class="invalid-feedback">请至少选择一个平台</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="scheduledAt" class="form-label">定时发布（可选）</label>
+                            <input type="datetime-local" id="scheduledAt" name="scheduledAt" class="form-control">
+                            <div class="form-text">留空表示立即发布</div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-send me-1"></i>立即发布
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 发布历史 -->
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-header">发布历史</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th scope="col" class="ps-3">文章</th>
+                                <th scope="col">账号</th>
+                                <th scope="col">状态</th>
+                                <th scope="col">重试</th>
+                                <th scope="col">发布时间</th>
+                                <th scope="col" class="text-end pe-3">操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="record : ${records}">
+                                <td class="ps-3 text-truncate" style="max-width:180px;"
+                                    th:text="${record.articleTitle != null ? record.articleTitle : ('文章#' + record.articleId)}">文章</td>
+                                <td class="small" th:text="${record.accountName != null ? record.accountName : ('账号#' + record.accountId)}">账号</td>
+                                <td>
+                                    <span class="badge text-bg-secondary" th:if="${record.status == 'pending'}">待发布</span>
+                                    <span class="badge text-bg-primary" th:if="${record.status == 'publishing'}">发布中</span>
+                                    <span class="badge text-bg-success" th:if="${record.status == 'success'}">成功</span>
+                                    <span class="badge text-bg-danger" th:if="${record.status == 'failed'}"
+                                          th:title="${record.errorMessage}">失败</span>
+                                </td>
+                                <td th:text="${record.retryCount}">0</td>
+                                <td class="small text-muted"
+                                    th:text="${record.publishedAt != null ? #temporals.format(record.publishedAt, 'MM-dd HH:mm') : (record.scheduledAt != null ? '定时 ' + #temporals.format(record.scheduledAt, 'MM-dd HH:mm') : '--')}">--</td>
+                                <td class="text-end pe-3">
+                                    <form th:if="${record.status == 'failed'}"
+                                          th:action="@{/publish-records/{id}/retry(id=${record.id})}" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-warning">重试</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(records)}">
+                                <td colspan="6" class="text-center">
+                                    <th:block th:replace="~{fragments/common :: emptyState('暂无发布记录', '通过左侧表单发布第一篇文章')}"></th:block>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <small class="text-muted">共 <span th:text="${total}">0</span> 条</small>
+                    <th:block th:if="${totalPages > 1}">
+                        <nav aria-label="发布记录分页">
+                            <ul class="pagination pagination-sm mb-0">
+                                <li class="page-item" th:classappend="${currentPage <= 0 ? 'disabled' : ''}">
+                                    <a class="page-link" th:href="@{/publish(page=${currentPage - 1})}">&laquo;</a>
+                                </li>
+                                <li class="page-item" th:each="p : ${#numbers.sequence(0, totalPages - 1)}"
+                                    th:classappend="${p == currentPage ? 'active' : ''}">
+                                    <a class="page-link" th:href="@{/publish(page=${p})}" th:text="${p + 1}">1</a>
+                                </li>
+                                <li class="page-item" th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}">
+                                    <a class="page-link" th:href="@{/publish(page=${currentPage + 1})}">&raquo;</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </th:block>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>
