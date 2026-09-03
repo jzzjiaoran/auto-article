@@ -26,8 +26,21 @@ class HotTopicServiceTest {
     @Mock
     private HotTopicRepository hotTopicRepository;
 
+    @Mock
+    private HotTopicCollectionService hotTopicCollectionService;
+
     @InjectMocks
     private HotTopicService hotTopicService;
+
+    @Test
+    void should_delegate_collect_to_collection_service() {
+        when(hotTopicCollectionService.collectHotTopics()).thenReturn(new com.autoarticle.dto.HotTopicCollectResult());
+
+        var result = hotTopicService.collectHotTopics();
+
+        assertNotNull(result);
+        verify(hotTopicCollectionService, times(1)).collectHotTopics();
+    }
 
     @Test
     void should_throw_when_topic_not_found() {

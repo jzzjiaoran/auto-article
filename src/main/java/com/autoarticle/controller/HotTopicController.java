@@ -1,5 +1,6 @@
 package com.autoarticle.controller;
 
+import com.autoarticle.dto.HotTopicCollectResult;
 import com.autoarticle.service.HotTopicService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,6 +33,20 @@ public class HotTopicController {
         model.addAttribute("source", source);
         model.addAttribute("status", status);
         return "hot-topics/list";
+    }
+
+    /**
+     * 手动触发热点采集入口（对应列表页「立即采集」按钮）。
+     */
+    @PostMapping("/collect")
+    public String collect(RedirectAttributes redirectAttributes) {
+        try {
+            HotTopicCollectResult result = hotTopicService.collectHotTopics();
+            redirectAttributes.addFlashAttribute("successMessage", result.toMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "采集失败: " + e.getMessage());
+        }
+        return "redirect:/hot-topics";
     }
 
     @GetMapping("/{id}")

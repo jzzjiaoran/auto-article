@@ -1,5 +1,6 @@
 package com.autoarticle.service;
 
+import com.autoarticle.dto.HotTopicCollectResult;
 import com.autoarticle.dto.HotTopicDto;
 import com.autoarticle.entity.HotTopic;
 import com.autoarticle.exception.ResourceNotFoundException;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class HotTopicService {
 
     private final HotTopicRepository hotTopicRepository;
+    private final HotTopicCollectionService hotTopicCollectionService;
 
     public Page<HotTopicDto> getTopics(String keyword, String source, String status, int page, int size) {
         return hotTopicRepository.findByFilters(keyword, source, status, PageRequest.of(page, size))
@@ -36,6 +38,14 @@ public class HotTopicService {
         log.info("Refreshing hot topic: {}", topic.getTitle());
         topic.setStatus("unused");
         hotTopicRepository.save(topic);
+    }
+
+    /**
+     * 采集热点：@Scheduled → HotTopicService.collectHotTopics() → TopicCrawler 抓取 → 去重 → 入库。
+     * 与架构文档 §3.3 热点采集流程对齐。
+     */
+    public HotTopicCollectResult collectHotTopics() {
+        return hotTopicCollectionService.collectHotTopics();
     }
 
     private HotTopicDto toDto(HotTopic topic) {

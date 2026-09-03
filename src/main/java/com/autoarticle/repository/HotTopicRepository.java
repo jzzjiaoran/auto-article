@@ -20,4 +20,10 @@ public interface HotTopicRepository extends JpaRepository<HotTopic, Long> {
                                  @Param("source") String source,
                                  @Param("status") String status,
                                  Pageable pageable);
+
+    @Query("SELECT CASE WHEN COUNT(h) > 0 THEN TRUE ELSE FALSE END FROM HotTopic h " +
+           "WHERE LOWER(h.title) = LOWER(:title) " +
+           "AND h.collectedAt >= :startOfDay")
+    boolean existsSameDay(@Param("title") String title,
+                          @Param("startOfDay") java.time.LocalDateTime startOfDay);
 }

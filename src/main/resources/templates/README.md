@@ -36,6 +36,7 @@
 - 详情 `/hot-topics/{id}` → `hot-topics/detail.html`
   - `topic`（含 `sourceUrl`）、`articles`（关联文章，可空）
 - 采集路由（按单个热点触发，与架构文档 §4.1 一致）：`POST /hot-topics/{id}/refresh`（表单提交，成功后重定向回列表）
+- 手动采集（整批，JZZ-16）：`POST /hot-topics/collect`（列表页右上角「立即采集」按钮，触发 TopicCrawler 抓取 + 去重 + 入库，成功后 flash 返回新增数量）
 
 ### 3. 文章管理
 - 列表 `/articles` → `articles/list.html`

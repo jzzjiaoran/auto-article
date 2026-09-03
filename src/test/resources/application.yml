@@ -13,6 +13,13 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
 
 app:
+  hot-topic:
+    collect:
+      enabled: false
+      cron: "0 0 * * * *"
+      crawler-enabled: false
+      fallback-sample-enabled: true
+    seed-on-start: false
   llm:
     api-key: test-key
     base-url: http://localhost:9999

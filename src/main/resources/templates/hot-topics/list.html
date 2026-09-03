@@ -12,6 +12,11 @@
             <h1 class="h3 fw-bold mb-1">热点管理</h1>
             <p class="text-muted mb-0">网络热点收集、筛选与分类</p>
         </div>
+        <form th:action="@{/hot-topics/collect}" method="post" class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-cloud-download me-1"></i><span class="d-none d-md-inline">立即采集</span>
+            </button>
+        </form>
     </div>
 
     <!-- 搜索结果/错误提示 -->
@@ -110,7 +115,7 @@
                     </tr>
                     <tr th:if="${#lists.isEmpty(topics)}">
                         <td colspan="7" class="text-center">
-                            <th:block th:replace="~{fragments/common :: emptyState('暂无热点数据', '热点由定时任务自动采集，可稍后刷新页面查看')}"></th:block>
+                            <th:block th:replace="~{fragments/common :: emptyState('暂无热点数据', '点击右上角「立即采集」手动抓取，或由定时任务自动采集后刷新查看')}"></th:block>
                         </td>
                     </tr>
                     </tbody>
