@@ -33,34 +33,22 @@ public class GenerateController {
 
     @PostMapping("/articles")
     @ResponseBody
-    public Result<String> createAndGenerate(@RequestBody GenerationRequest request) {
-        try {
-            String taskId = generationService.startGeneration(request);
-            return Result.ok(taskId);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
-        }
+    public Result<String> createAndGenerate(@Valid @RequestBody GenerationRequest request) {
+        String taskId = generationService.startGeneration(request);
+        return Result.ok(taskId);
     }
 
     @PostMapping("/articles/{id}/generate")
     @ResponseBody
     public Result<String> regenerate(@PathVariable Long id) {
-        try {
-            String taskId = generationService.regenerateArticle(id);
-            return Result.ok(taskId);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
-        }
+        String taskId = generationService.regenerateArticle(id);
+        return Result.ok(taskId);
     }
 
     @GetMapping("/tasks/{taskId}")
     @ResponseBody
     public Result<TaskStatus> getTaskStatus(@PathVariable String taskId) {
-        try {
-            TaskStatus status = generationService.getTaskStatus(taskId);
-            return Result.ok(status);
-        } catch (Exception e) {
-            return Result.error(e.getMessage());
-        }
+        TaskStatus status = generationService.getTaskStatus(taskId);
+        return Result.ok(status);
     }
 }
