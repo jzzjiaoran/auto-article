@@ -64,8 +64,7 @@
                             <a th:href="@{/platform-accounts/{id}/edit(id=${account.id})}" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-pencil"></i><span class="d-none d-md-inline ms-1">编辑</span>
                             </a>
-                            <form th:action="@{/platform-accounts/{id}(id=${account.id})}" method="post" class="d-inline">
-                                <input type="hidden" name="_method" value="delete">
+                            <form th:action="@{/platform-accounts/{id}/delete(id=${account.id})}" method="post" class="d-inline">
                                 <button type="submit" class="btn btn-sm btn-outline-danger"
                                         th:attr="data-confirm=|确定删除账号「${account.name}」吗？此操作不可恢复。|">
                                     <i class="bi bi-trash"></i><span class="d-none d-md-inline ms-1">删除</span>

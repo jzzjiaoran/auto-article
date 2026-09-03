@@ -13,11 +13,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,6 +27,7 @@ public class PublishService {
     private final PublishRecordRepository publishRecordRepository;
     private final ArticleRepository articleRepository;
     private final PlatformAccountRepository platformAccountRepository;
+    private final AsyncPublishService asyncPublishService;
 
     @Transactional
     public void publish(PublishRequest request) {
@@ -48,30 +47,10 @@ public class PublishService {
             publishRecordRepository.save(record);
 
             if (request.getScheduledAt() == null) {
-                doPublish(record.getId());
+                asyncPublishService.doPublish(record.getId());
             }
         }
         log.info("Publish initiated for article {} to {} platforms", article.getTitle(), request.getAccountIds().size());
-    }
-
-    @Async
-    public void doPublish(Long recordId) {
-        PublishRecord record = publishRecordRepository.findById(recordId)
-                .orElse(null);
-        if (record == null) return;
-
-        try {
-            Thread.sleep(1000);
-            record.setStatus("success");
-            record.setPublishedAt(LocalDateTime.now());
-            log.info("Published record {} successfully", recordId);
-        } catch (Exception e) {
-            record.setStatus("failed");
-            record.setErrorMessage(e.getMessage());
-            record.setRetryCount(record.getRetryCount() + 1);
-            log.error("Publish failed for record {}", recordId, e);
-        }
-        publishRecordRepository.save(record);
     }
 
     @Transactional
@@ -82,7 +61,7 @@ public class PublishService {
         record.setRetryCount(record.getRetryCount() + 1);
         record.setErrorMessage(null);
         publishRecordRepository.save(record);
-        doPublish(recordId);
+        asyncPublishService.doPublish(recordId);
     }
 
     public Page<PublishRecordDto> getRecords(int page, int size) {

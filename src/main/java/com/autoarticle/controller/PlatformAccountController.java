@@ -63,17 +63,24 @@ public class PlatformAccountController {
             @RequestParam(required = false) String appSecret,
             @RequestParam(required = false) String cookie,
             @RequestParam(required = false) String apiToken,
-            @RequestParam(required = false) String _method,
             RedirectAttributes redirectAttributes) {
-        if ("delete".equals(_method)) {
-            return delete(id, redirectAttributes);
-        }
         try {
             Map<String, String> credentials = buildCredentials(platform, appId, appSecret, cookie, apiToken);
             platformAccountService.updateAccount(id, name, platform, credentials, true);
             redirectAttributes.addFlashAttribute("successMessage", "账号更新成功");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "更新失败: " + e.getMessage());
+        }
+        return "redirect:/platform-accounts";
+    }
+
+    @PostMapping("/{id}/delete")
+    public String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            platformAccountService.deleteAccount(id);
+            redirectAttributes.addFlashAttribute("successMessage", "账号已删除");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "删除失败: " + e.getMessage());
         }
         return "redirect:/platform-accounts";
     }
@@ -85,16 +92,6 @@ public class PlatformAccountController {
             redirectAttributes.addFlashAttribute("successMessage", "账号验证成功");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", "验证失败: " + e.getMessage());
-        }
-        return "redirect:/platform-accounts";
-    }
-
-    private String delete(@PathVariable Long id, RedirectAttributes redirectAttributes) {
-        try {
-            platformAccountService.deleteAccount(id);
-            redirectAttributes.addFlashAttribute("successMessage", "账号已删除");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "删除失败: " + e.getMessage());
         }
         return "redirect:/platform-accounts";
     }

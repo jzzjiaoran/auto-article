@@ -60,8 +60,7 @@
                         <th:block th:if="${article.summary != null and !#strings.isEmpty(article.summary)}">
                             <div class="alert alert-light border text-muted small" th:text="${article.summary}">摘要</div>
                         </th:block>
-                        <!-- 服务端渲染 Markdown 内容（后端将 Markdown 转换为 HTML 放入 contentHtml -->
-                        <div class="article-body" th:utext="${article.contentHtml != null ? article.contentHtml : article.content}">正文</div>
+                        <div class="article-body" th:utext="${article.contentHtml}">正文</div>
                     </div>
                 </div>
             </div>

@@ -33,6 +33,8 @@ class PublishServiceTest {
     private ArticleRepository articleRepository;
     @Mock
     private PlatformAccountRepository platformAccountRepository;
+    @Mock
+    private AsyncPublishService asyncPublishService;
 
     @InjectMocks
     private PublishService publishService;
@@ -76,6 +78,7 @@ class PublishServiceTest {
         publishService.publish(request);
 
         verify(publishRecordRepository, times(1)).save(any());
+        verify(asyncPublishService, times(1)).doPublish(any());
     }
 
     @Test
@@ -94,6 +97,7 @@ class PublishServiceTest {
         publishService.publish(request);
 
         verify(publishRecordRepository, times(1)).save(any());
+        verify(asyncPublishService, never()).doPublish(any());
     }
 
     @Test
@@ -116,5 +120,22 @@ class PublishServiceTest {
         PublishRecordDto dto = result.getContent().get(0);
         assertEquals("Article", dto.getArticleTitle());
         assertEquals("GZH", dto.getAccountName());
+    }
+
+    @Test
+    void should_retry_publish() {
+        PublishRecord record = PublishRecord.builder()
+                .id(1L)
+                .status("failed")
+                .retryCount(1)
+                .build();
+        when(publishRecordRepository.findById(1L)).thenReturn(Optional.of(record));
+        when(publishRecordRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        publishService.retryPublish(1L);
+
+        assertEquals("publishing", record.getStatus());
+        assertEquals(2, record.getRetryCount());
+        verify(asyncPublishService).doPublish(1L);
     }
 }

@@ -1,8 +1,12 @@
 package com.autoarticle.service;
 
+import com.autoarticle.dto.GenerationRequest;
 import com.autoarticle.dto.TaskStatus;
 import com.autoarticle.entity.GenerationTask;
+import com.autoarticle.entity.HotTopic;
 import com.autoarticle.repository.GenerationTaskRepository;
+import com.autoarticle.repository.ArticleRepository;
+import com.autoarticle.repository.HotTopicRepository;
 import com.autoarticle.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,16 +20,16 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class GenerationTaskServiceTest {
+class GenerationServiceTest {
 
     @Mock
     private GenerationTaskRepository generationTaskRepository;
     @Mock
-    private com.autoarticle.repository.ArticleRepository articleRepository;
+    private ArticleRepository articleRepository;
     @Mock
-    private com.autoarticle.repository.HotTopicRepository hotTopicRepository;
+    private HotTopicRepository hotTopicRepository;
     @Mock
-    private com.autoarticle.util.HtmlSanitizer htmlSanitizer;
+    private AsyncGenerationService asyncGenerationService;
 
     @InjectMocks
     private GenerationService generationService;
@@ -61,5 +65,42 @@ class GenerationTaskServiceTest {
 
         assertThrows(ResourceNotFoundException.class,
                 () -> generationService.regenerateArticle(999L));
+    }
+
+    @Test
+    void should_throw_when_topic_not_found_on_start() {
+        GenerationRequest request = GenerationRequest.builder()
+                .title("Test Article")
+                .topicId(999L)
+                .style("popular")
+                .length("medium")
+                .build();
+        when(hotTopicRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> generationService.startGeneration(request));
+    }
+
+    @Test
+    void should_start_generation_and_call_async() {
+        when(articleRepository.save(any())).thenAnswer(inv -> {
+            var a = inv.getArgument(0);
+            var idField = a.getClass().getDeclaredField("id");
+            idField.setAccessible(true);
+            idField.set(a, 1L);
+            return a;
+        });
+        when(generationTaskRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        GenerationRequest request = GenerationRequest.builder()
+                .title("Test Article")
+                .style("popular")
+                .length("medium")
+                .build();
+
+        String taskId = generationService.startGeneration(request);
+
+        assertNotNull(taskId);
+        verify(asyncGenerationService).doGenerate(eq(taskId), eq(1L), any(GenerationRequest.class));
     }
 }

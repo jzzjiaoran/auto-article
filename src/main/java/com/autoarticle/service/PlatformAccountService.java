@@ -2,15 +2,21 @@ package com.autoarticle.service;
 
 import com.autoarticle.dto.PlatformAccountDto;
 import com.autoarticle.entity.PlatformAccount;
-import com.autoarticle.exception.BusinessException;
 import com.autoarticle.exception.ResourceNotFoundException;
 import com.autoarticle.repository.PlatformAccountRepository;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -21,6 +27,10 @@ import java.util.stream.Collectors;
 public class PlatformAccountService {
 
     private final PlatformAccountRepository platformAccountRepository;
+    private final ObjectMapper objectMapper;
+
+    @Value("${app.credentials.secret:auto-article-default-secret-key}")
+    private String encryptionKey;
 
     public List<PlatformAccountDto> getAllAccounts() {
         return platformAccountRepository.findAll().stream()
@@ -46,7 +56,7 @@ public class PlatformAccountService {
                 .name(name)
                 .platform(platform)
                 .status("unverified")
-                .credentials(mapToString(credentials))
+                .credentials(encryptCredentials(credentials))
                 .enabled(true)
                 .build();
         account = platformAccountRepository.save(account);
@@ -61,7 +71,7 @@ public class PlatformAccountService {
                 .orElseThrow(() -> new ResourceNotFoundException("平台账号", id));
         account.setName(name);
         if (credentials != null) {
-            account.setCredentials(mapToString(credentials));
+            account.setCredentials(encryptCredentials(credentials));
         }
         if (enabled != null) {
             account.setEnabled(enabled);
@@ -103,11 +113,37 @@ public class PlatformAccountService {
 
     private PlatformAccountDto toDetailDto(PlatformAccount account) {
         PlatformAccountDto dto = toDto(account);
-        dto.setCredentials(parseCredentials(account.getCredentials()));
+        dto.setCredentials(decryptCredentials(account.getCredentials()));
         return dto;
     }
 
-    private Map<String, String> parseCredentials(String credentials) {
+    private String encryptCredentials(Map<String, String> map) {
+        if (map == null || map.isEmpty()) {
+            return "";
+        }
+        try {
+            String json = objectMapper.writeValueAsString(map);
+            return encrypt(json);
+        } catch (Exception e) {
+            log.error("Failed to encrypt credentials", e);
+            return "";
+        }
+    }
+
+    private Map<String, String> decryptCredentials(String encrypted) {
+        if (encrypted == null || encrypted.isBlank()) {
+            return Map.of();
+        }
+        try {
+            String json = decrypt(encrypted);
+            return objectMapper.readValue(json, new TypeReference<Map<String, String>>() {});
+        } catch (Exception e) {
+            log.error("Failed to decrypt credentials, attempting legacy format", e);
+            return parseLegacyCredentials(encrypted);
+        }
+    }
+
+    private Map<String, String> parseLegacyCredentials(String credentials) {
         if (credentials == null || credentials.isBlank()) {
             return Map.of();
         }
@@ -121,12 +157,25 @@ public class PlatformAccountService {
         return map;
     }
 
-    private String mapToString(Map<String, String> map) {
-        if (map == null || map.isEmpty()) {
-            return "";
-        }
-        return map.entrySet().stream()
-                .map(e -> e.getKey() + "=" + e.getValue())
-                .collect(Collectors.joining("|"));
+    private String encrypt(String plainText) throws Exception {
+        byte[] keyBytes = encryptionKey.getBytes(StandardCharsets.UTF_8);
+        byte[] keyBytes16 = new byte[16];
+        System.arraycopy(keyBytes, 0, keyBytes16, 0, Math.min(keyBytes.length, 16));
+        SecretKeySpec secretKey = new SecretKeySpec(keyBytes16, "AES");
+        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+        byte[] encrypted = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
+        return Base64.getEncoder().encodeToString(encrypted);
+    }
+
+    private String decrypt(String cipherText) throws Exception {
+        byte[] keyBytes = encryptionKey.getBytes(StandardCharsets.UTF_8);
+        byte[] keyBytes16 = new byte[16];
+        System.arraycopy(keyBytes, 0, keyBytes16, 0, Math.min(keyBytes.length, 16));
+        SecretKeySpec secretKey = new SecretKeySpec(keyBytes16, "AES");
+        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, secretKey);
+        byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(cipherText));
+        return new String(decrypted, StandardCharsets.UTF_8);
     }
 }
