@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+<head>
+    <title>热点详情</title>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <div th:if="${topic == null}">
+        <div class="card p-5 text-center">
+            <h2 class="h4 mb-3">热点不存在</h2>
+            <a th:href="@{/hot-topics}" class="btn btn-primary mx-auto">返回热点列表</a>
+        </div>
+    </div>
+
+    <div th:if="${topic != null}">
+        <div class="d-flex flex-wrap justify-content-between align-items-start mb-3">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a th:href="@{/hot-topics}" class="text-decoration-none">热点管理</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">热点详情</li>
+                    </ol>
+                </nav>
+                <h1 class="h3 fw-bold mb-1" th:text="${topic.title}">热点标题</h1>
+                <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                    <span class="badge text-bg-light border" th:switch="${topic.source}">
+                        <span th:case="'weibo'">微博</span>
+                        <span th:case="'zhihu'">知乎</span>
+                        <span th:case="'toutiao'">头条</span>
+                        <span th:case="*" th:text="${topic.source}">其它</span>
+                    </span>
+                    <span class="badge text-bg-danger" th:if="${topic.hotLevel == 'high'}">热度：高</span>
+                    <span class="badge text-bg-warning" th:if="${topic.hotLevel == 'middle'}">热度：中</span>
+                    <span class="badge text-bg-secondary" th:if="${topic.hotLevel == 'normal' or topic.hotLevel == null}">热度：正常</span>
+                    <small class="text-muted">采集于 <span th:text="${#temporals.format(topic.collectedAt, 'yyyy-MM-dd HH:mm')}">--</span></small>
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-2 flex-wrap">
+                <form th:action="@{/hot-topics/{id}/refresh(id=${topic.id})}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-repeat me-1"></i>刷新该热点
+                    </button>
+                </form>
+                <a th:href="@{/generate(topicId=${topic.id})}" class="btn btn-primary">
+                    <i class="bi bi-stars me-1"></i>基于此热点生成文章
+                </a>
+            </div>
+        </div>
+
+        <div th:replace="~{fragments/common :: flashMessages(${successMessage}, ${errorMessage})}"></div>
+
+        <div class="card">
+            <div class="card-header">热点信息</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-3 col-lg-2 text-muted">排名</dt>
+                    <dd class="col-sm-9 col-lg-10" th:text="${topic.rank}">1</dd>
+                    <dt class="col-sm-3 col-lg-2 text-muted">状态</dt>
+                    <dd class="col-sm-9 col-lg-10">
+                        <th:block th:switch="${topic.status}">
+                            <span th:case="'unused'" class="badge text-bg-secondary">未使用</span>
+                            <span th:case="'generating'" class="badge text-bg-primary">生成中</span>
+                            <span th:case="'generated'" class="badge text-bg-success">已生成</span>
+                            <span th:case="*" class="badge text-bg-secondary" th:text="${topic.status}"></span>
+                        </th:block>
+                    </dd>
+                    <dt class="col-sm-3 col-lg-2 text-muted">来源链接</dt>
+                    <dd class="col-sm-9 col-lg-10">
+                        <a th:if="${topic.sourceUrl != null and !#strings.isEmpty(topic.sourceUrl)}"
+                           th:href="${topic.sourceUrl}" target="_blank" rel="noopener noreferrer"
+                           class="text-decoration-none">查看原始内容 <i class="bi bi-box-arrow-up-right small"></i></a>
+                        <span th:unless="${topic.sourceUrl != null and !#strings.isEmpty(topic.sourceUrl)}" class="text-muted">--</span>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">基于本热点生成的文章</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th scope="col" class="ps-3">标题</th>
+                            <th scope="col">状态</th>
+                            <th scope="col">字数</th>
+                            <th scope="col" class="text-end pe-3">操作</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="article : ${articles}">
+                            <td class="ps-3">
+                                <a th:href="@{/articles/{id}(id=${article.id})}"
+                                   class="text-decoration-none fw-medium" th:text="${article.title}">文章标题</a>
+                            </td>
+                            <td>
+                                <span class="badge text-bg-secondary" th:if="${article.status == 'draft'}">草稿</span>
+                                <span class="badge text-bg-info" th:if="${article.status == 'generated'}">已生成</span>
+                                <span class="badge text-bg-success" th:if="${article.status == 'published'}">已发布</span>
+                                <span class="badge text-bg-danger" th:if="${article.status == 'failed'}">失败</span>
+                            </td>
+                            <td th:text="${article.wordCount}">0</td>
+                            <td class="text-end pe-3">
+                                <a th:href="@{/articles/{id}(id=${article.id})}" class="btn btn-sm btn-outline-primary">查看</a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(articles)}">
+                            <td colspan="4" class="text-center text-muted py-4">暂无关联文章</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

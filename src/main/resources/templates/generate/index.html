@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+<head>
+    <title>AI 生成文章</title>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1">AI 生成文章</h1>
+            <p class="text-muted mb-0">选择一个热点，AI 将基于它自动生成内容</p>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/common :: flashMessages(${successMessage}, ${errorMessage})}"></div>
+
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="card mb-3">
+                <div class="card-header">生成配置</div>
+                <div class="card-body">
+                    <form th:action="@{/articles}" method="post" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="topicSelect" class="form-label">选择热点 <span class="text-danger">*</span></label>
+                            <select id="topicSelect" name="topicId" class="form-select" required>
+                                <option value="">请选择热点</option>
+                                <option th:each="topic : ${topics}"
+                                        th:value="${topic.id}"
+                                        th:attr="data-title=${topic.title}"
+                                        th:selected="${selectedTopicId != null and selectedTopicId == topic.id}"
+                                        th:text="${topic.title}">热点标题</option>
+                            </select>
+                            <div class="invalid-feedback">请选择一个热点</div>
+                            <div class="form-text" th:if="${#lists.isEmpty(topics)}">
+                                暂无热点，请先前往<a th:href="@{/hot-topics}">热点管理</a>采集。
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="articleTitle" class="form-label">文章标题</label>
+                            <input type="text" id="articleTitle" name="title" class="form-control" maxlength="255"
+                                   placeholder="选填，默认由热点自动生成">
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label for="style" class="form-label">文章风格</label>
+                                <select id="style" name="style" class="form-select">
+                                    <option value="popular" th:selected="${style == null or style == 'popular'}">科普</option>
+                                    <option value="commentary" th:selected="${style == 'commentary'}">评论</option>
+                                    <option value="story" th:selected="${style == 'story'}">故事</option>
+                                    <option value="marketing" th:selected="${style == 'marketing'}">营销</option>
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <label for="length" class="form-label">文章长度</label>
+                                <select id="length" name="length" class="form-select">
+                                    <option value="short" th:selected="${length == null or length == 'short'}">短文（约 500 字）</option>
+                                    <option value="medium" th:selected="${length == 'medium'}">中篇（约 1000 字）</option>
+                                    <option value="long" th:selected="${length == 'long'}">长文（约 2000 字）</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="prompt" class="form-label">自定义 Prompt（可选）</label>
+                            <textarea id="prompt" name="prompt" rows="3" class="form-control"
+                                      placeholder="补充你希望 AI 遵循的额外要求，如语气、结构等"></textarea>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" id="saveDraft" name="saveDraft" class="form-check-input" checked>
+                            <label for="saveDraft" class="form-check-label">生成后自动保存为文章</label>
+                        </div>
+
+                        <div class="d-grid d-sm-flex gap-2">
+                            <button type="submit" id="generateSubmitBtn" class="btn btn-primary">
+                                <i class="bi bi-stars me-1"></i>开始生成
+                            </button>
+                            <button type="reset" class="btn btn-outline-secondary">重置</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 生成进度与结果 -->
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header">生成进度</div>
+                <div class="card-body">
+                    <div id="generation-box" class="text-center text-muted py-4"
+                         th:if="${generation == null}">
+                        <i class="bi bi-magic display-5 d-block mb-2"></i>
+                        <p class="small mb-0">提交生成任务后，此处将实时显示进度</p>
+                    </div>
+
+                    <div id="generation-box" th:if="${generation != null}"
+                         th:attr="data-task-id=${generation.taskId}, data-poll-url=${'/tasks/' + generation.taskId}">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span id="generation-status" th:text="${generation.status == 'pending' ? '任务已提交，正在排队...' : generation.message ?: generation.status}">处理中...</span>
+                            <span class="text-muted" th:text="${'任务#' + generation.taskId}">--</span>
+                        </div>
+                        <div class="progress mb-3" role="progressbar" aria-label="生成进度" aria-valuemin="0" aria-valuemax="100">
+                            <div id="generation-bar" class="progress-bar progress-bar-striped progress-bar-animated generation-progress"
+                                 th:classappend="${generation.status == 'success' ? ' bg-success' : (generation.status == 'failed' ? ' bg-danger' : '')}"
+                                 style="width: 50%;"></div>
+                        </div>
+                        <a id="generation-result-link" th:href="@{/articles/{id}(id=${generation.articleId})}"
+                           class="btn btn-success btn-sm d-none" th:if="${generation.status == 'success'}">
+                            <i class="bi bi-check-circle me-1"></i>查看生成结果
+                        </a>
+                        <p class="small text-muted mb-0">生成为异步任务，本页会自动轮询进度。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+<head>
+    <title>文章详情</title>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <div th:if="${article == null}">
+        <div class="card p-5 text-center">
+            <h2 class="h4 mb-3">文章不存在</h2>
+            <a th:href="@{/articles}" class="btn btn-primary mx-auto">返回文章列表</a>
+        </div>
+    </div>
+
+    <div th:if="${article != null}">
+        <div class="d-flex flex-wrap justify-content-between align-items-start mb-3">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1">
+                        <li class="breadcrumb-item"><a th:href="@{/articles}" class="text-decoration-none">文章管理</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">文章详情</li>
+                    </ol>
+                </nav>
+                <h1 class="h3 fw-bold mb-1" th:text="${article.title}">文章标题</h1>
+                <div class="d-flex flex-wrap align-items-center gap-2 mt-2 small text-muted">
+                    <span class="badge text-bg-secondary" th:if="${article.status == 'draft'}">草稿</span>
+                    <span class="badge text-bg-info" th:if="${article.status == 'generated'}">已生成</span>
+                    <span class="badge text-bg-success" th:if="${article.status == 'published'}">已发布</span>
+                    <span class="badge text-bg-danger" th:if="${article.status == 'failed'}">失败</span>
+                    <span th:if="${article.wordCount > 0}">共 <span th:text="${article.wordCount}">0</span> 字</span>
+                    <span th:if="${article.aiProvider != null}">生成模型：<span th:text="${article.aiProvider}">--</span></span>
+                    <span>更新于 <span th:text="${#temporals.format(article.updatedAt, 'yyyy-MM-dd HH:mm')}">--</span></span>
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-2 flex-wrap">
+                <a th:href="@{/articles/{id}/edit(id=${article.id})}" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i>编辑
+                </a>
+                <form th:action="@{/articles/{id}/generate(id=${article.id})}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-secondary"
+                            th:attr="data-confirm=|基于当前热点重新生成文章「${article.title}」？现有正文将被覆盖。|">
+                        <i class="bi bi-stars me-1"></i>重新生成
+                    </button>
+                </form>
+                <a th:href="@{/publish-records(articleId=${article.id})}" class="btn btn-success">
+                    <i class="bi bi-send me-1"></i>发布
+                </a>
+            </div>
+        </div>
+
+        <div th:replace="~{fragments/common :: flashMessages(${successMessage}, ${errorMessage})}"></div>
+
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">正文</div>
+                    <div class="card-body">
+                        <th:block th:if="${article.summary != null and !#strings.isEmpty(article.summary)}">
+                            <div class="alert alert-light border text-muted small" th:text="${article.summary}">摘要</div>
+                        </th:block>
+                        <!-- 服务端渲染 Markdown 内容（后端将 Markdown 转换为 HTML 放入 contentHtml -->
+                        <div class="article-body" th:utext="${article.contentHtml != null ? article.contentHtml : article.content}">正文</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card mb-3">
+                    <div class="card-header">信息</div>
+                    <div class="card-body">
+                        <dl class="row mb-0 small">
+                            <dt class="col-4 text-muted">创建时间</dt>
+                            <dd class="col-8 mb-1" th:text="${#temporals.format(article.createdAt, 'yyyy-MM-dd HH:mm')}">--</dd>
+                            <dt class="col-4 text-muted">更新时间</dt>
+                            <dd class="col-8 mb-1" th:text="${#temporals.format(article.updatedAt, 'yyyy-MM-dd HH:mm')}">--</dd>
+                            <dt class="col-4 text-muted">生成模型</dt>
+                            <dd class="col-8 mb-1" th:text="${article.aiProvider ?: '--'}">--</dd>
+                            <dt class="col-4 text-muted">字数</dt>
+                            <dd class="col-8 mb-0" th:text="${article.wordCount}">0</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">发布记录</div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center small"
+                                th:each="record : ${publishRecords}">
+                                <span th:text="${record.accountName != null ? record.accountName : ('账号#' + record.accountId)}">账号</span>
+                                <th:block th:switch="${record.status}">
+                                    <span th:case="'pending'" class="badge text-bg-secondary">待发布</span>
+                                    <span th:case="'publishing'" class="badge text-bg-primary">发布中</span>
+                                    <span th:case="'success'" class="badge text-bg-success">成功</span>
+                                    <span th:case="'failed'" class="badge text-bg-danger">失败</span>
+                                </th:block>
+                            </li>
+                            <li class="list-group-item text-center text-muted small py-4" th:if="${#lists.isEmpty(publishRecords)}">
+                                暂无发布记录
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

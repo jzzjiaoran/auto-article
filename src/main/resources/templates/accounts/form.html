@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+<head>
+    <title>平台账号</title>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <div class="d-flex align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a th:href="@{/platform-accounts}" class="text-decoration-none">平台管理</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        <span th:text="${account.id != null ? '编辑账号' : '添加账号'}">添加账号</span>
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="h3 fw-bold mb-1" th:text="${account.id != null ? '编辑平台账号' : '添加平台账号'}">添加平台账号</h1>
+        </div>
+    </div>
+
+    <div th:replace="~{fragments/common :: flashMessages(${successMessage}, ${errorMessage})}"></div>
+
+    <div class="row">
+        <div class="col-lg-8 col-xl-6">
+            <div class="card">
+                <div class="card-body">
+                    <form th:action="@{/platform-accounts}" method="post" class="needs-validation" novalidate>
+                        <input type="hidden" name="id" th:if="${account.id != null}" th:value="${account.id}">
+                        <input type="hidden" name="_method" th:if="${account.id != null}" value="put">
+
+                        <div class="mb-3">
+                            <label for="platform" class="form-label">平台 <span class="text-danger">*</span></label>
+                            <select id="platform" name="platform" class="form-select" required
+                                    th:disabled="${account.id != null}">
+                                <option value="">请选择平台</option>
+                                <option value="gzh" th:selected="${account.platform == 'gzh'}">微信公众号</option>
+                                <option value="xiaohongshu" th:selected="${account.platform == 'xiaohongshu'}">小红书</option>
+                                <option value="zhihu" th:selected="${account.platform == 'zhihu'}">知乎</option>
+                                <option value="toutiao" th:selected="${account.platform == 'toutiao'}">今日头条</option>
+                            </select>
+                            <div class="invalid-feedback">请选择平台</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">账号名称 <span class="text-danger">*</span></label>
+                            <input type="text" id="name" name="name" class="form-control" maxlength="100"
+                                   th:value="${account.name}" placeholder="如：我的公众号" required>
+                            <div class="invalid-feedback">请输入账号名称</div>
+                        </div>
+
+                        <!-- 凭据字段（新增时必须填写；编辑时留空表示不修改） -->
+                        <div class="mb-3">
+                            <label class="form-label" th:text="${account.id != null ? '更新凭据（留空则不修改）' : '凭据'}">
+                                凭据</label>
+                        </div>
+
+                        <div class="card bg-light border-0 mb-3" th:if="${account.platform == 'gzh' or account.platform == null}">
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="appId" class="form-label">AppID</label>
+                                    <input type="text" id="appId" name="appId" class="form-control"
+                                           th:value="${credentials.appId}" placeholder="公众号 AppID" autocomplete="off">
+                                </div>
+                                <div class="mb-0">
+                                    <label for="appSecret" class="form-label">AppSecret</label>
+                                    <input type="password" id="appSecret" name="appSecret" class="form-control"
+                                           placeholder="公众号 AppSecret" autocomplete="new-password">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card bg-light border-0 mb-3" th:if="${account.platform == 'xiaohongshu'}">
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="cookie" class="form-label">Cookie</label>
+                                    <textarea id="cookie" name="cookie" rows="3" class="form-control"
+                                              placeholder="小红书登录 Cookie" autocomplete="off"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card bg-light border-0 mb-3" th:if="${account.platform == 'zhihu' or account.platform == 'toutiao'}">
+                            <div class="card-body">
+                                <div class="mb-0">
+                                    <label for="apiToken" class="form-label">API Token / Cookie</label>
+                                    <textarea id="apiToken" name="apiToken" rows="2" class="form-control"
+                                              placeholder="平台访问令牌或 Cookie" autocomplete="off"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning small" role="alert">
+                            <i class="bi bi-shield-lock me-1"></i>
+                            凭据将加密存储于服务端，界面中永不回显明文。
+                        </div>
+
+                        <div class="mb-3 form-check" th:if="${account.id != null}">
+                            <input type="checkbox" id="enabled" name="enabled" class="form-check-input"
+                                   th:checked="${account.status != 'disabled'}">
+                            <label for="enabled" class="form-check-label">启用该账号</label>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>保存
+                            </button>
+                            <a th:href="@{/platform-accounts}" class="btn btn-outline-secondary">取消</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

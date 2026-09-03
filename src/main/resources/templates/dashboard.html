@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+<head>
+    <title>系统首页</title>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1">欢迎回来 👋</h1>
+            <p class="text-muted mb-0">auto-article 数据概览与快捷入口</p>
+        </div>
+        <div class="mt-2 mt-sm-0">
+            <a th:href="@{/generate}" class="btn btn-primary">
+                <i class="bi bi-stars me-1"></i>AI 生成文章
+            </a>
+        </div>
+    </div>
+
+    <!-- 数据概览 -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="card">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-file-earmark-text"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">文章总数</div>
+                        <div class="h4 fw-bold mb-0" th:text="${stats.articleCount}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="bi bi-fire"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">热点总数</div>
+                        <div class="h4 fw-bold mb-0" th:text="${stats.hotTopicCount}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-collection"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">平台账号</div>
+                        <div class="h4 fw-bold mb-0" th:text="${stats.accountCount}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-send"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">发布总数</div>
+                        <div class="h4 fw-bold mb-0" th:text="${stats.publishCount}">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- 快捷操作 -->
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header">快捷操作</div>
+                <div class="card-body quick-action-list">
+                    <div class="list-group list-group-flush">
+                        <a th:href="@{/generate}" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <i class="bi bi-stars fs-5 text-primary"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-medium">AI 生成文章</div>
+                                <small class="text-muted">基于热点一键生成</small>
+                            </div>
+                            <i class="bi bi-chevron-right text-muted"></i>
+                        </a>
+                        <a th:href="@{/hot-topics}" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <i class="bi bi-fire fs-5 text-danger"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-medium">热点管理</div>
+                                <small class="text-muted">查看与筛选网络热点</small>
+                            </div>
+                            <i class="bi bi-chevron-right text-muted"></i>
+                        </a>
+                        <a th:href="@{/articles}" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <i class="bi bi-file-earmark-text fs-5 text-success"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-medium">文章管理</div>
+                                <small class="text-muted">编辑与查看文章</small>
+                            </div>
+                            <i class="bi bi-chevron-right text-muted"></i>
+                        </a>
+                        <a th:href="@{/platform-accounts}" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <i class="bi bi-columns-gap fs-5 text-info"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-medium">平台管理</div>
+                                <small class="text-muted">维护发布平台账号</small>
+                            </div>
+                            <i class="bi bi-chevron-right text-muted"></i>
+                        </a>
+                        <a th:href="@{/publish-records}" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <i class="bi bi-send fs-5 text-warning"></i>
+                            <div class="flex-grow-1">
+                                <div class="fw-medium">发布管理</div>
+                                <small class="text-muted">一键发布与状态跟踪</small>
+                            </div>
+                            <i class="bi bi-chevron-right text-muted"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 最近文章 -->
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>最近文章</span>
+                    <a th:href="@{/articles}" class="small text-decoration-none">查看全部</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead>
+                            <tr>
+                                <th scope="col">标题</th>
+                                <th scope="col">状态</th>
+                                <th scope="col">字数</th>
+                                <th scope="col">更新时间</th>
+                                <th scope="col" class="text-end">操作</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="article : ${recentArticles}" th:if="${!#lists.isEmpty(recentArticles)}">
+                                <td class="text-truncate" style="max-width: 240px;" th:text="${article.title}">文章标题</td>
+                                <td>
+                                    <span class="badge text-bg-secondary"
+                                          th:text="${article.status}" th:if="${article.status == 'draft'}">草稿</span>
+                                    <span class="badge text-bg-info"
+                                          th:text="${article.status}" th:if="${article.status == 'generated'}">已生成</span>
+                                    <span class="badge text-bg-success"
+                                          th:text="${article.status}" th:if="${article.status == 'published'}">已发布</span>
+                                    <span class="badge text-bg-danger"
+                                          th:text="${article.status}" th:if="${article.status == 'failed'}">失败</span>
+                                </td>
+                                <td th:text="${article.wordCount}">0</td>
+                                <td class="small text-muted"
+                                    th:text="${#temporals.format(article.updatedAt, 'MM-dd HH:mm')}">--</td>
+                                <td class="text-end">
+                                    <a th:href="@{/articles/{id}(id=${article.id})}"
+                                       class="btn btn-sm btn-outline-primary">查看</a>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(recentArticles)}">
+                                <td colspan="5" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox display-6 d-block mb-2"></i>暂无文章，快去 AI 生成一篇吧
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>

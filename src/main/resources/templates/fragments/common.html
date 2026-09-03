@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- 成功/错误 flash 提示（由 Controller 通过 redirectAttributes 传入 successMessage / errorMessage） -->
+<div th:fragment="flashMessages(successMessage, errorMessage)">
+    <th:block th:if="${successMessage != null and !#strings.isEmpty(successMessage)}">
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle me-2"></i>
+            <span th:text="${successMessage}">操作成功</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭"></button>
+        </div>
+    </th:block>
+    <th:block th:if="${errorMessage != null and !#strings.isEmpty(errorMessage)}">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <span th:text="${errorMessage}">操作失败</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="关闭"></button>
+        </div>
+    </th:block>
+</div>
+
+<!-- 空状态占位 -->
+<div th:fragment="emptyState(title, description)">
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-inbox display-4 d-block mb-3"></i>
+        <h5 class="mb-1" th:text="${title ?: '暂无数据'}">暂无数据</h5>
+        <p class="small mb-0" th:text="${description ?: '稍后再来看看吧'}">暂无说明</p>
+    </div>
+</div>
+
+</body>
+</html>

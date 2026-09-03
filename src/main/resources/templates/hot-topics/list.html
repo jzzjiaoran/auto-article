@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{fragments/layout}">
+<head>
+    <title>热点管理</title>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1">热点管理</h1>
+            <p class="text-muted mb-0">网络热点收集、筛选与分类</p>
+        </div>
+    </div>
+
+    <!-- 搜索结果/错误提示 -->
+    <div th:replace="~{fragments/common :: flashMessages(${successMessage}, ${errorMessage})}"></div>
+
+    <!-- 筛选工具栏 -->
+    <div class="card mb-3">
+        <div class="card-body py-3">
+            <form th:action="@{/hot-topics}" method="get" class="row g-2 align-items-end">
+                <div class="col-12 col-md-4 col-lg-3">
+                    <label for="keyword" class="form-label small mb-1">关键词</label>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" id="keyword" name="keyword" class="form-control"
+                               th:value="${param.keyword != null ? param.keyword[0] : ''}" placeholder="搜索标题">
+                    </div>
+                </div>
+                <div class="col-6 col-md-2 col-lg-2">
+                    <label for="source" class="form-label small mb-1">来源</label>
+                    <select id="source" name="source" class="form-select form-select-sm">
+                        <option value="">全部来源</option>
+                        <option value="weibo" th:selected="${param.source != null and param.source[0] == 'weibo'}">微博</option>
+                        <option value="zhihu" th:selected="${param.source != null and param.source[0] == 'zhihu'}">知乎</option>
+                        <option value="toutiao" th:selected="${param.source != null and param.source[0] == 'toutiao'}">头条</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2 col-lg-2">
+                    <label for="status" class="form-label small mb-1">状态</label>
+                    <select id="status" name="status" class="form-select form-select-sm">
+                        <option value="">全部状态</option>
+                        <option value="unused" th:selected="${param.status != null and param.status[0] == 'unused'}">未使用</option>
+                        <option value="generating" th:selected="${param.status != null and param.status[0] == 'generating'}">生成中</option>
+                        <option value="generated" th:selected="${param.status != null and param.status[0] == 'generated'}">已生成</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4 col-lg-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary w-100">查询</button>
+                    <a th:href="@{/hot-topics}" class="btn btn-sm btn-outline-secondary w-100">重置</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 热点列表 -->
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th scope="col" class="ps-3" style="width:64px;">排名</th>
+                        <th scope="col">标题</th>
+                        <th scope="col">来源</th>
+                        <th scope="col">热度</th>
+                        <th scope="col">状态</th>
+                        <th scope="col" class="text-end pe-3">采集时间</th>
+                        <th scope="col" class="text-end pe-3">操作</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="topic : ${topics}">
+                        <td class="ps-3 text-muted fw-medium" th:text="${topic.rank}">1</td>
+                        <td>
+                            <a th:href="@{/hot-topics/{id}(id=${topic.id})}"
+                               class="text-decoration-none fw-medium" th:text="${topic.title}">热点标题</a>
+                        </td>
+                        <td>
+                            <span class="badge text-bg-light border"
+                                  th:switch="${topic.source}">
+                                <span th:case="'weibo'">微博</span>
+                                <span th:case="'zhihu'">知乎</span>
+                                <span th:case="'toutiao'">头条</span>
+                                <span th:case="*" th:text="${topic.source}">其它</span>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge text-bg-danger" th:if="${topic.hotLevel == 'high'}">高</span>
+                            <span class="badge text-bg-warning" th:if="${topic.hotLevel == 'middle'}">中</span>
+                            <span class="badge text-bg-secondary" th:if="${topic.hotLevel == 'normal' or topic.hotLevel == null}">正常</span>
+                        </td>
+                        <td>
+                            <span class="badge text-bg-secondary" th:if="${topic.status == 'unused'}">未使用</span>
+                            <span class="badge text-bg-primary" th:if="${topic.status == 'generating'}">生成中</span>
+                            <span class="badge text-bg-success" th:if="${topic.status == 'generated'}">已生成</span>
+                        </td>
+                        <td class="text-end pe-3 small text-muted"
+                            th:text="${#temporals.format(topic.collectedAt, 'MM-dd HH:mm')}">--</td>
+                        <td class="text-end pe-3 text-nowrap">
+                            <form th:action="@{/hot-topics/{id}/refresh(id=${topic.id})}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-primary"
+                                        th:attr="data-confirm=|刷新热点「${topic.title}」？将重新拉取最新内容。|">
+                                    <i class="bi bi-arrow-repeat"></i><span class="d-none d-md-inline ms-1">刷新</span>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(topics)}">
+                        <td colspan="7" class="text-center">
+                            <th:block th:replace="~{fragments/common :: emptyState('暂无热点数据', '热点由定时任务自动采集，可稍后刷新页面查看')}"></th:block>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- 分页 -->
+        <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <small class="text-muted">共 <span th:text="${total}">0</span> 条</small>
+            <th:block th:if="${totalPages > 1}">
+                <nav aria-label="热点列表分页">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" th:classappend="${currentPage <= 0 ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/hot-topics(page=${currentPage - 1}, keyword=${param.keyword != null ? param.keyword[0] : ''}, source=${param.source != null ? param.source[0] : ''}, status=${param.status != null ? param.status[0] : ''})}">&laquo;</a>
+                        </li>
+                        <li class="page-item" th:each="p : ${#numbers.sequence(0, totalPages - 1)}"
+                            th:classappend="${p == currentPage ? 'active' : ''}">
+                            <a class="page-link" th:href="@{/hot-topics(page=${p}, keyword=${param.keyword != null ? param.keyword[0] : ''}, source=${param.source != null ? param.source[0] : ''}, status=${param.status != null ? param.status[0] : ''})}"
+                               th:text="${p + 1}">1</a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage >= totalPages - 1 ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/hot-topics(page=${currentPage + 1}, keyword=${param.keyword != null ? param.keyword[0] : ''}, source=${param.source != null ? param.source[0] : ''}, status=${param.status != null ? param.status[0] : ''})}">&raquo;</a>
+                        </li>
+                    </ul>
+                </nav>
+            </th:block>
+        </div>
+    </div>
+</th:block>
+</body>
+</html>
