@@ -95,7 +95,7 @@ public class GenerationService {
 
     public TaskStatus getTaskStatus(String taskId) {
         GenerationTask task = generationTaskRepository.findByTaskId(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("任务", null));
+                .orElseThrow(() -> new ResourceNotFoundException("任务", taskId));
         return TaskStatus.builder()
                 .taskId(task.getTaskId())
                 .status(task.getStatus())
