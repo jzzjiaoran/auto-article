@@ -1,0 +1,144 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: auto-article
+  APP_PORT: 8081            # 对外端口
+  CONTAINER_PORT: 8080      # 容器内端口
+
+jobs:
+  # ---------- 构建 + 单元测试 ----------
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      - name: Run tests
+        run: mvn -B test
+
+      - name: Package
+        run: mvn -B -DskipTests package
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: target/surefire-reports/
+          if-no-files-found: ignore
+
+  # ---------- Docker 镜像构建 + 部署 ----------
+  deploy:
+    # 仅在 main 分支推送 / 手动触发时部署；PR 只跑构建测试
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tag (git SHA)
+        run: echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: docker build -t "${IMAGE_NAME}:${IMAGE_TAG}" -t "${IMAGE_NAME}:latest" .
+
+      - name: Save image tarball
+        run: docker save "${IMAGE_NAME}:${IMAGE_TAG}" | gzip > auto-article-image.tar.gz
+
+      - name: Copy image to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          source: auto-article-image.tar.gz
+          target: /opt/auto-article/
+
+      - name: Copy compose + env to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          source: docker-compose.yml
+          target: /opt/auto-article/
+
+      - name: Deploy on server (health check + auto rollback)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          envs: IMAGE_NAME,IMAGE_TAG,APP_PORT,CONTAINER_PORT
+          script: |
+            set -e
+            cd /opt/auto-article
+
+            # 写入运行时环境变量（来自 GitHub Secrets，不硬编码进仓库）
+            {
+              echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}"
+              echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}"
+              echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}"
+              echo "CREDENTIALS_SECRET=${{ secrets.CREDENTIALS_SECRET }}"
+              echo "LLM_API_KEY=${{ secrets.LLM_API_KEY }}"
+              echo "LLM_BASE_URL=${{ secrets.LLM_BASE_URL }}"
+              echo "LLM_MODEL=${{ secrets.LLM_MODEL }}"
+              echo "IMAGE_TAG=${IMAGE_TAG}"
+            } > .env
+            chmod 600 .env
+
+            # 记录上一个版本用于回滚
+            PREV_TAG=$(docker inspect --format='{{.Config.Image}}' ${IMAGE_NAME}-app 2>/dev/null | cut -d: -f2 || echo "")
+
+            # 加载新镜像
+            docker load < auto-article-image.tar.gz
+            rm -f auto-article-image.tar.gz
+
+            # 启动数据库（如未运行）
+            docker compose up -d db
+
+            # 用新镜像滚动更新应用容器
+            docker compose up -d --no-deps --force-recreate app
+
+            # 健康检查（最多 120s）
+            echo "Waiting for health check..."
+            for i in $(seq 1 24); do
+              if curl -fsS "http://localhost:${APP_PORT}/actuator/health" | grep -q '"UP"'; then
+                echo "Health check PASSED"
+                break
+              fi
+              sleep 5
+            done
+
+            if ! curl -fsS "http://localhost:${APP_PORT}/actuator/health" | grep -q '"UP"'; then
+              echo "Health check FAILED — rolling back to previous image: ${PREV_TAG}"
+              if [ -n "$PREV_TAG" ]; then
+                sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${PREV_TAG}/" .env
+                docker compose up -d --no-deps --force-recreate app
+                echo "Rolled back to ${PREV_TAG}"
+              fi
+              exit 1
+            fi
+
+            # 清理无用镜像（保留当前与上一个版本）
+            docker image prune -f || true
+            echo "Deploy SUCCESS: ${IMAGE_NAME}:${IMAGE_TAG}"

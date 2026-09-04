@@ -1,0 +1,62 @@
+name: auto-article
+
+services:
+  app:
+    build: .
+    image: auto-article:${IMAGE_TAG:-latest}
+    container_name: auto-article-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      DB_USERNAME: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      CREDENTIALS_SECRET: ${CREDENTIALS_SECRET}
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.openai.com/v1}
+      LLM_MODEL: ${LLM_MODEL:-gpt-3.5-turbo}
+      APP_CRAWLER_ENABLED: ${APP_CRAWLER_ENABLED:-true}
+      APP_CRAWLER_CRON: ${APP_CRAWLER_CRON:-0 */30 * * * *}
+    ports:
+      # 对外 8081 -> 容器 8080
+      - "8081:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    networks:
+      - auto-article-net
+
+  db:
+    image: postgres:16-alpine
+    container_name: auto-article-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # 首次初始化的建库/建表脚本（可选）
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # 数据库不对外暴露端口，仅在内部网络可达
+    networks:
+      - auto-article-net
+
+volumes:
+  db-data:
+
+networks:
+  auto-article-net:
+    driver: bridge

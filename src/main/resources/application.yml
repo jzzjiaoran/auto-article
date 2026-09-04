@@ -1,11 +1,11 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/auto_article
-    username: postgres
-    password: postgres
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/auto_article}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -24,8 +24,8 @@ spring:
 app:
   crawler:
     # 热点定时采集 cron（默认每 30 分钟）；app.crawler.enabled=false 可停用定时任务
-    enabled: true
-    cron: "0 */30 * * * *"
+    enabled: ${APP_CRAWLER_ENABLED:true}
+    cron: ${APP_CRAWLER_CRON:0 */30 * * * *}
   hot-topic:
     # 真实抓取无结果且库为空时，回退内置示例/种子数据
     fallback-sample-enabled: true
@@ -37,3 +37,13 @@ app:
     api-key: ${LLM_API_KEY:sk-placeholder}
     base-url: ${LLM_BASE_URL:https://api.openai.com/v1}
     model: ${LLM_MODEL:gpt-3.5-turbo}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
