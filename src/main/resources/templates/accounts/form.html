@@ -62,7 +62,7 @@
                                 <div class="mb-3">
                                     <label for="appId" class="form-label">AppID</label>
                                     <input type="text" id="appId" name="appId" class="form-control"
-                                           th:value="${credentials.appId}" placeholder="公众号 AppID" autocomplete="off">
+                                           th:value="${credentials != null ? credentials['appId'] : ''}" placeholder="公众号 AppID" autocomplete="off">
                                 </div>
                                 <div class="mb-0">
                                     <label for="appSecret" class="form-label">AppSecret</label>
