@@ -59,8 +59,8 @@
   - `accounts`（`PlatformAccountDto`：`id`、`name`、`platform`、`status`、`lastVerifyAt`）
 - 新增 `/platform-accounts/new`、编辑 `/platform-accounts/{id}/edit` → `accounts/form.html`
   - `account`、`credentials`（脱敏后的凭据视图，如 `appId`）
-  - 提交：`POST /platform-accounts`（新增）/ `POST /platform-accounts/{id}` + `_method=put`（编辑）
-- 验证：`POST /platform-accounts/{id}/verify`；删除：`POST /platform-accounts/{id}` + `_method=delete`
+  - 提交：`POST /platform-accounts`（新增）/ `POST /platform-accounts/{id}`（编辑，`method=post`；平台不可变更，禁用下拉并携带隐藏 `platform` 值）
+- 验证：`POST /platform-accounts/{id}/verify`；删除：`POST /platform-accounts/{id}/delete`
 
 ### 6. 发布管理 `/publish-records` → `publish/index.html`
 - `publishableArticles`（`List<ArticleDto>`）、`accounts`（已验证与全部账号）

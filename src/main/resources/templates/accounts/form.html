@@ -27,9 +27,10 @@
         <div class="col-lg-8 col-xl-6">
             <div class="card">
                 <div class="card-body">
-                    <form th:action="@{/platform-accounts}" method="post" class="needs-validation" novalidate>
-                        <input type="hidden" name="id" th:if="${account.id != null}" th:value="${account.id}">
-                        <input type="hidden" name="_method" th:if="${account.id != null}" value="put">
+                    <form th:action="${account.id != null} ? @{/platform-accounts/{id}(id=${account.id})} : @{/platform-accounts}"
+                          method="post" class="needs-validation" novalidate>
+                        <!-- 平台在创建后不可变更；编辑态下拉被禁用（disabled 控件不随表单提交），故以隐藏域携带当前平台值 -->
+                        <input type="hidden" name="platform" th:if="${account.id != null}" th:value="${account.platform}">
 
                         <div class="mb-3">
                             <label for="platform" class="form-label">平台 <span class="text-danger">*</span></label>

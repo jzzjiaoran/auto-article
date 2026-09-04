@@ -127,6 +127,77 @@ class PlatformAccountServiceTest {
     }
 
     @Test
+    void should_update_name_and_keep_credentials_when_blank_on_edit() {
+        PlatformAccount account = PlatformAccount.builder()
+                .id(1L)
+                .name("Old")
+                .platform("gzh")
+                .status("verified")
+                .enabled(true)
+                .build();
+        Map<String, String> creds = Map.of("appId", "my-app-id", "appSecret", "my-secret-value");
+
+        PlatformAccountService spyService = spy(platformAccountService);
+        when(platformAccountRepository.save(any())).thenAnswer(inv -> {
+            PlatformAccount a = inv.getArgument(0);
+            a.setId(1L);
+            return a;
+        });
+        spyService.createAccount("Old", "gzh", creds);
+
+        verify(platformAccountRepository).save(argThat(a -> {
+            account.setCredentials(a.getCredentials());
+            return true;
+        }));
+
+        when(platformAccountRepository.findById(1L)).thenReturn(Optional.of(account));
+
+        // 编辑：仅改名称，凭据留空（appSecret 不应被清空）
+        spyService.updateAccount(1L, "New", "gzh",
+                Map.of("appId", "", "appSecret", ""), true);
+
+        var dto = spyService.getAccountById(1L);
+        assertEquals("New", dto.getName());
+        assertEquals("my-app-id", dto.getCredentials().get("appId"));
+        assertEquals("my-secret-value", dto.getCredentials().get("appSecret"));
+    }
+
+    @Test
+    void should_update_credentials_fields_that_are_provided() {
+        PlatformAccount account = PlatformAccount.builder()
+                .id(1L)
+                .name("Old")
+                .platform("gzh")
+                .status("verified")
+                .enabled(true)
+                .build();
+        Map<String, String> creds = Map.of("appId", "my-app-id", "appSecret", "my-secret-value");
+
+        PlatformAccountService spyService = spy(platformAccountService);
+        when(platformAccountRepository.save(any())).thenAnswer(inv -> {
+            PlatformAccount a = inv.getArgument(0);
+            a.setId(1L);
+            return a;
+        });
+        spyService.createAccount("Old", "gzh", creds);
+
+        verify(platformAccountRepository).save(argThat(a -> {
+            account.setCredentials(a.getCredentials());
+            return true;
+        }));
+
+        when(platformAccountRepository.findById(1L)).thenReturn(Optional.of(account));
+
+        // 编辑：appId 保留、appSecret 提供新值 → 覆盖新 secret，保留 appId
+        spyService.updateAccount(1L, "Old", "gzh",
+                Map.of("appId", "", "appSecret", "brand-new-secret"), true);
+
+        var dto = spyService.getAccountById(1L);
+        assertEquals("my-app-id", dto.getCredentials().get("appId"));
+        assertEquals("brand-new-secret", dto.getCredentials().get("appSecret"));
+    }
+
+    @Test
     void should_delete_account() {
         when(platformAccountRepository.existsById(1L)).thenReturn(true);
 
