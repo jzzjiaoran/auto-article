@@ -30,6 +30,10 @@ db/init/01-init.sql        # 数据库首次初始化（扩展）
 
 本地开发：`cp .env.example .env` 后填入真实值。生产由 GitHub Secrets 注入。
 
+> ⚠️ **必填环境变量**：`POSTGRES_DB`、`POSTGRES_USER`、`POSTGRES_PASSWORD`、`CREDENTIALS_SECRET`、`LLM_API_KEY` 缺失时应用启动直接失败（fail-fast），不再静默使用默认值。生产必须通过环境变量或 secret manager 注入，切勿提交真实值到仓库。
+>
+> 📌 **生产数据库 schema**：`application-prod.yml` 中 `ddl-auto: validate`，禁止 Hibernate 自动改表；表结构变更须通过脚本/迁移管理（默认 `default` profile 仍为 `update`，仅用于本地开发）。
+
 ## 本地启动（含数据库）
 
 ```bash

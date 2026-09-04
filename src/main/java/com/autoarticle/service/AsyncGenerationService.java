@@ -12,10 +12,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.annotation.PostConstruct;
 
 @Slf4j
 @Service
@@ -35,6 +38,13 @@ public class AsyncGenerationService {
 
     @Value("${app.llm.model}")
     private String model;
+
+    @PostConstruct
+    void validateLlmConfig() {
+        Assert.hasText(apiKey,
+                "app.llm.api-key (env LLM_API_KEY) is required and must not be blank — "
+                        + "AI article generation is disabled without it");
+    }
 
     @Async
     public void doGenerate(String taskId, Long articleId, GenerationRequest request) {

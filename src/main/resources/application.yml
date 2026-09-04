@@ -32,9 +32,11 @@ app:
     # 全新环境启动时写入示例热点，保证列表与生成链路可用
     seed-on-start: true
   credentials:
-    secret: ${CREDENTIALS_SECRET:auto-article-default-secret-key}
+    # 必填：平台账号凭据加密密钥，必须通过环境变量注入，缺失则启动失败
+    secret: ${CREDENTIALS_SECRET}
   llm:
-    api-key: ${LLM_API_KEY:sk-placeholder}
+    # 必填：大模型 API Key，必须通过环境变量注入，缺失则启动失败
+    api-key: ${LLM_API_KEY}
     base-url: ${LLM_BASE_URL:https://api.openai.com/v1}
     model: ${LLM_MODEL:gpt-3.5-turbo}
 

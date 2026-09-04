@@ -62,7 +62,7 @@ jobs:
         run: docker save "${IMAGE_NAME}:${IMAGE_TAG}" | gzip > auto-article-image.tar.gz
 
       - name: Copy image to server
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v0.1.10
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -72,7 +72,7 @@ jobs:
           target: /opt/auto-article/
 
       - name: Copy compose + env to server
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v0.1.10
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
@@ -82,7 +82,7 @@ jobs:
           target: /opt/auto-article/
 
       - name: Deploy on server (health check + auto rollback)
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.2.1
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
