@@ -11,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
+import jakarta.annotation.PostConstruct;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -29,8 +31,15 @@ public class PlatformAccountService {
     private final PlatformAccountRepository platformAccountRepository;
     private final ObjectMapper objectMapper;
 
-    @Value("${app.credentials.secret:auto-article-default-secret-key}")
+    @Value("${app.credentials.secret}")
     private String encryptionKey;
+
+    @PostConstruct
+    void validateEncryptionKey() {
+        Assert.hasText(encryptionKey,
+                "app.credentials.secret (env CREDENTIALS_SECRET) is required and must not be blank — "
+                        + "platform account credentials encryption is disabled without it");
+    }
 
     public List<PlatformAccountDto> getAllAccounts() {
         return platformAccountRepository.findAll().stream()

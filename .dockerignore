@@ -7,4 +7,11 @@ target/
 .vscode/
 .DS_Store
 *.log
-.env
+.git/
+.github/
+docker-compose.yml
+Dockerfile
+.dockerignore
+*.md
+!README.md
+test_push.txt
